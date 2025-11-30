@@ -1,6 +1,7 @@
 com\jamplifier\investments\util\MessageUtils.class
 com\jamplifier\investments\storage\mongo\MongoInvestmentStorage.class
 com\jamplifier\investments\investment\InvestmentProfile.class
+com\jamplifier\investments\storage\sql\SqliteInvestmentStorage.class
 com\jamplifier\investments\InvestmentsPlugin.class
 com\jamplifier\investments\gui\InvestmentsMenu.class
 com\jamplifier\investments\util\FoliaSchedulerUtil.class

@@ -1,7 +1,10 @@
 # Investment plugin configuration
+# Which storage backend to use: SQLITE, MYSQL, or MONGODB
+storage-type: SQLITE
 
-# Which storage backend to use: MYSQL or MONGODB
-storage-type: MYSQL
+sqlite:
+  # Database file name inside the plugin folder
+  file: "investments.db"
 
 mysql:
   host: "localhost"
@@ -16,6 +19,7 @@ mongodb:
   uri: "mongodb://localhost:27017"
   database: "investments"
   collection: "player_investments"
+
 
 # Base interest settings (we can flesh out logic later)
 interest:

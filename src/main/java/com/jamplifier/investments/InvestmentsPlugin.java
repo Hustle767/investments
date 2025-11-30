@@ -8,6 +8,7 @@ import com.jamplifier.investments.investment.InvestmentManager;
 import com.jamplifier.investments.storage.InvestmentStorage;
 import com.jamplifier.investments.storage.mongo.MongoInvestmentStorage;
 import com.jamplifier.investments.storage.sql.SqlInvestmentStorage;
+import com.jamplifier.investments.storage.sql.SqliteInvestmentStorage;
 import com.jamplifier.investments.util.ChatInputManager;
 import com.jamplifier.investments.util.ConfigKeys;
 import com.jamplifier.investments.util.FoliaSchedulerUtil;
@@ -73,16 +74,19 @@ public class InvestmentsPlugin extends JavaPlugin {
     }
 
     private InvestmentStorage createStorage() {
-        String type = getConfig().getString(ConfigKeys.STORAGE_TYPE, "MYSQL").toUpperCase();
+        String type = getConfig().getString(ConfigKeys.STORAGE_TYPE, "SQLITE").toUpperCase();
 
         switch (type) {
+            case "MYSQL":
+                return new SqlInvestmentStorage(this);
             case "MONGODB":
                 return new MongoInvestmentStorage(this);
-            case "MYSQL":
+            case "SQLITE":
             default:
-                return new SqlInvestmentStorage(this);
+                return new SqliteInvestmentStorage(this);
         }
     }
+
 
     public EconomyHook getEconomyHook() {
         return economyHook;

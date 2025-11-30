@@ -36,16 +36,23 @@ public class ChatInputManager implements Listener {
             return;
         }
 
+        // Stop normal chat broadcast
         event.setCancelled(true);
+
         String msg = event.getMessage().trim();
 
+        // Remove from waiting *now* so they don't get double-handled
+        waiting.remove(player.getUniqueId());
+
         if (msg.equalsIgnoreCase("cancel")) {
-            waiting.remove(player.getUniqueId());
-            MessageUtils.send(player, "chat-enter-amount.cancelled");
+            // Safe to schedule this back to main/entity thread as well
+            FoliaSchedulerUtil.runForEntity(player, () ->
+                    MessageUtils.send(player, "chat-enter-amount.cancelled")
+            );
             return;
         }
 
-        waiting.remove(player.getUniqueId());
-        handler.accept(player, msg);
+        // Run the handler on the correct thread (entity scheduler / main)
+        FoliaSchedulerUtil.runForEntity(player, () -> handler.accept(player, msg));
     }
 }

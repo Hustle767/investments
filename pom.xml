@@ -21,10 +21,13 @@
         <hikaricp.version>5.1.0</hikaricp.version>
         <mysql.driver.version>9.0.0</mysql.driver.version>
         <mongodb.driver.version>5.1.2</mongodb.driver.version>
+        <sqlite.version>3.47.1.0</sqlite.version>
 
         <!-- Build settings -->
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
+        
+        
     </properties>
 
     <repositories>
@@ -84,6 +87,13 @@
             <artifactId>mongodb-driver-sync</artifactId>
             <version>${mongodb.driver.version}</version>
         </dependency>
+        
+        <!-- SQlite driver (sync) -->
+        <dependency>
+        	<groupId>org.xerial</groupId>
+        	<artifactId>sqlite-jdbc</artifactId>
+        	<version>${sqlite.version}</version>
+    	</dependency>
 
         <dependency>
             <groupId>org.jetbrains</groupId>
