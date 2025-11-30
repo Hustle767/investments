@@ -26,6 +26,9 @@ interest:
   rate-percent: 0.001
   # how often to apply/update the accumulated interest in-game
   interval-minutes: 1
+  
+# Minimum amount a player is allowed to invest
+min-invest-amount: 10000.0
 
 # Profit gain notifications
 notifications:

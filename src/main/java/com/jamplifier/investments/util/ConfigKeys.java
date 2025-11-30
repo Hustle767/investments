@@ -18,4 +18,7 @@ public final class ConfigKeys {
     // Auto-collect
     public static final String AUTOCOLLECT_ENABLED = "autocollect.enabled";
     public static final String AUTOCOLLECT_PERMISSION = "autocollect.permission";
+    // Min invest amount
+    public static final String MIN_INVEST_AMOUNT = "min-invest-amount";
+
 }

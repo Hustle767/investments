@@ -36,11 +36,18 @@ public class ChatInputManager implements Listener {
             }
         }
 
+        // Read minimum from config
+        double minAmountDouble = InvestmentsPlugin.getInstance()
+                .getConfig()
+                .getDouble(ConfigKeys.MIN_INVEST_AMOUNT, 10000.0D);
+
         Map<String, String> ph = new HashMap<>();
         ph.put("options", optionsText);
+        ph.put("min", String.valueOf((long) minAmountDouble));
 
         MessageUtils.send(player, "chat-enter-amount.start", ph);
     }
+
 
     public void cancel(Player player) {
         waiting.remove(player.getUniqueId());

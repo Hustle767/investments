@@ -1,6 +1,7 @@
 package com.jamplifier.investments.command;
 
 import com.jamplifier.investments.util.AmountUtil;
+import com.jamplifier.investments.util.ConfigKeys;
 import com.jamplifier.investments.InvestmentsPlugin;
 import com.jamplifier.investments.investment.InterestService;
 import com.jamplifier.investments.economy.EconomyHook;
@@ -230,6 +231,20 @@ public class InvestCommand implements CommandExecutor, TabCompleter {
     }
 
     private void handleInvest(Player player, BigDecimal amount) {
+        // --- Enforce minimum investment from config ---
+        double minAmountDouble = plugin.getConfig().getDouble(ConfigKeys.MIN_INVEST_AMOUNT, 10000.0D);
+        BigDecimal minAmount = BigDecimal.valueOf(minAmountDouble);
+
+        if (amount.compareTo(minAmount) < 0) {
+            Map<String, String> ph = new HashMap<>();
+            ph.put("amount", amount.toPlainString());
+            ph.put("min", minAmount.toPlainString());
+
+            MessageUtils.send(player, "min-investment", ph);
+            return;
+        }
+
+        // --- Existing balance + slots logic ---
         double bal = economy.getBalance(player);
         if (bal < amount.doubleValue()) {
             MessageUtils.send(player, "not-enough-money");
