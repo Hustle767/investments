@@ -20,7 +20,7 @@ import java.util.UUID;
 
 /**
  * MongoDB implementation of InvestmentStorage.
- * 
+ *
  * Document schema:
  * {
  *   _id: "<uuid>",
@@ -42,20 +42,26 @@ public class MongoInvestmentStorage implements InvestmentStorage {
         this.plugin = plugin;
     }
 
+    // IMPORTANT: no "throws Exception" here – must match InvestmentStorage.init()
     @Override
-    public void init() throws Exception {
-        FileConfiguration cfg = plugin.getConfig();
+    public void init() {
+        try {
+            FileConfiguration cfg = plugin.getConfig();
 
-        String uri = cfg.getString("mongodb.uri", "mongodb://localhost:27017");
-        String dbName = cfg.getString("mongodb.database", "investments");
-        String collName = cfg.getString("mongodb.collection", "player_investments");
+            String uri = cfg.getString("mongodb.uri", "mongodb://localhost:27017");
+            String dbName = cfg.getString("mongodb.database", "investments");
+            String collName = cfg.getString("mongodb.collection", "player_investments");
 
-        // Create client & collection
-        client = MongoClients.create(uri);
-        MongoDatabase db = client.getDatabase(dbName);
-        collection = db.getCollection(collName);
+            client = MongoClients.create(uri);
+            MongoDatabase db = client.getDatabase(dbName);
+            collection = db.getCollection(collName);
 
-        plugin.getLogger().info("[Investments] Connected to MongoDB: " + uri + " / " + dbName + "." + collName);
+            plugin.getLogger().info("[Investments] Connected to MongoDB: " + uri + " / " + dbName + "." + collName);
+        } catch (Exception ex) {
+            plugin.getLogger().severe("[Investments] Failed to initialize MongoDB storage: " + ex.getMessage());
+            ex.printStackTrace();
+            // leave collection null; calls will just no-op / return empty
+        }
     }
 
     @Override
@@ -120,6 +126,22 @@ public class MongoInvestmentStorage implements InvestmentStorage {
                 Filters.eq("_id", owner.toString()),
                 doc,
                 new ReplaceOptions().upsert(true)
+        );
+    }
+
+    // NEW: implement the missing method from InvestmentStorage
+    @Override
+    public void deleteInvestments(UUID owner) {
+        if (collection == null) return;
+        // Either:
+        // - delete entire document
+        //   collection.deleteOne(Filters.eq("_id", owner.toString()));
+        // or:
+        // - just clear investments & reset autoCollect, keeping doc
+        collection.updateOne(
+                Filters.eq("_id", owner.toString()),
+                new Document("$set", new Document("investments", new ArrayList<>())
+                        .append("autoCollect", false))
         );
     }
 
