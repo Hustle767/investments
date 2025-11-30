@@ -8,6 +8,8 @@ com\jamplifier\investments\util\FoliaSchedulerUtil.class
 com\jamplifier\investments\command\InvestCommand.class
 com\jamplifier\investments\storage\sql\SqlInvestmentStorage.class
 com\jamplifier\investments\investment\InvestmentManager.class
+com\jamplifier\investments\investment\InterestService.class
+com\jamplifier\investments\investment\InterestService$MultiplierData.class
 com\jamplifier\investments\investment\Investment.class
 com\jamplifier\investments\gui\InvestmentsMenuListener.class
 com\jamplifier\investments\economy\EconomyHook.class

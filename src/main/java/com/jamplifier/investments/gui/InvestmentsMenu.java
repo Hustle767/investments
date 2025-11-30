@@ -28,6 +28,7 @@ public class InvestmentsMenu implements InventoryHolder {
     private static int deleteSlot;
     private static int infoSlot;
     private static int collectSlot;
+    private static int autocollectSlot;
 
     private static boolean fillerEnabled;
     private static Material fillerMaterial;
@@ -62,6 +63,7 @@ public class InvestmentsMenu implements InventoryHolder {
         deleteSlot = root.getInt("delete-investment-slot", 11);
         infoSlot = root.getInt("info-slot", 13);
         collectSlot = root.getInt("collect-slot", 15);
+        autocollectSlot = root.getInt("autocollect-slot", 24);
 
         ConfigurationSection fillerSec = root.getConfigurationSection("filler");
         if (fillerSec != null) {
@@ -76,7 +78,7 @@ public class InvestmentsMenu implements InventoryHolder {
             Object slotsObj = fillerSec.get("slots");
             if (slotsObj instanceof String) {
                 fillerAllSlots = ((String) slotsObj).equalsIgnoreCase("all");
-            } else if (slotsObj instanceof List) {
+            } else if (slotsObj instanceof List<?>) {
                 fillerAllSlots = false;
                 for (Object o : (List<?>) slotsObj) {
                     try {
@@ -120,13 +122,17 @@ public class InvestmentsMenu implements InventoryHolder {
         return collectSlot;
     }
 
+    public static int getAutocollectSlot() {
+        return autocollectSlot;
+    }
+
     private void build() {
         ConfigurationSection root = guiConfig.getConfigurationSection("investments-gui");
         if (root == null) {
             return;
         }
 
-        // Place filler first
+        // Fillers
         if (fillerEnabled) {
             ItemStack fillerItem = new ItemStack(fillerMaterial);
             ItemMeta meta = fillerItem.getItemMeta();
@@ -155,22 +161,30 @@ public class InvestmentsMenu implements InventoryHolder {
         placeholders.put("autocollect_status",
                 profile.isAutoCollect() ? "&aEnabled" : "&cDisabled");
 
-        // Delete item
+        // Delete
         ItemStack deleteItem = buildItem(root.getConfigurationSection("delete-item"), null);
         if (deleteItem != null && deleteSlot >= 0 && deleteSlot < inventory.getSize()) {
             inventory.setItem(deleteSlot, deleteItem);
         }
 
-        // Info item
+        // Info
         ItemStack infoItem = buildItem(root.getConfigurationSection("info-item"), placeholders);
         if (infoItem != null && infoSlot >= 0 && infoSlot < inventory.getSize()) {
             inventory.setItem(infoSlot, infoItem);
         }
 
-        // Collect item
+        // Collect
         ItemStack collectItem = buildItem(root.getConfigurationSection("collect-item"), placeholders);
         if (collectItem != null && collectSlot >= 0 && collectSlot < inventory.getSize()) {
             inventory.setItem(collectSlot, collectItem);
+        }
+
+        // Auto-collect toggle item
+        ConfigurationSection autoOn = root.getConfigurationSection("autocollect-item-on");
+        ConfigurationSection autoOff = root.getConfigurationSection("autocollect-item-off");
+        if (autocollectSlot >= 0 && autocollectSlot < inventory.getSize() && autoOn != null && autoOff != null) {
+            ItemStack autoItem = buildItem(profile.isAutoCollect() ? autoOn : autoOff, placeholders);
+            inventory.setItem(autocollectSlot, autoItem);
         }
     }
 

@@ -32,7 +32,12 @@ interest:
 max-invest-permissions:
   invest.default: 5
   invest.vip: 10
-
+  
+pre-selected-investments:
+  "1": 10000
+  "2": 20000
+  "3": 50000
+  
 # Auto-collect settings
 autocollect:
   enabled: true

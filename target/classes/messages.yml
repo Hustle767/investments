@@ -4,14 +4,25 @@ no-permission: "<prefix>&cYou don't have permission."
 invalid-amount: "<prefix>&cPlease enter a valid positive amount."
 not-enough-money: "<prefix>&cYou do not have enough money."
 invest-added: "<prefix>&aYou invested &e%amount%&a."
-investment-deleted: "<prefix>&cYour current investment was deleted."
+investment-deleted: "<prefix>&cYour current investments were deleted."
+no-investments: "<prefix>&cYou have no investments."
+
 profit-collected: "<prefix>&aYou collected &e%amount%&a in profits."
 no-profit: "<prefix>&cYou have no profits to collect."
 max-investments-reached: "<prefix>&cYou have reached your max investments (&e%limit%&c)."
 
 chat-enter-amount:
-  start: "<prefix>&7Please type the amount you want to invest in chat, or type &ccancel&7."
+  start: "<prefix>&7Select or enter an amount.&r\n<prefix>&7Type an &aoption number&7 (&e%options%&7) or a &acustom amount&7. Type &ccancel &7to cancel."
   cancelled: "<prefix>&cInvestment input cancelled."
 
 autocollect-enabled: "<prefix>&aAuto-collect enabled."
 autocollect-disabled: "<prefix>&cAuto-collect disabled."
+
+# Admin-ish
+admin-reload: "<prefix>&aConfigs reloaded."
+admin-player-not-found: "<prefix>&cPlayer '&f%player%&c' not found."
+admin-delete-success: "<prefix>&aDeleted investments for &f%player%&a."
+admin-delete-none: "<prefix>&c%player% has no investments."
+admin-multiplier-set-player: "<prefix>&aSet multiplier &ex%multiplier% &afor &f%player% &afor &e%minutes% &aminutes."
+admin-multiplier-set-global: "<prefix>&aSet &eGLOBAL &amultiplier &ex%multiplier% &afor &e%minutes% &aminutes."
+admin-multiplier-invalid: "<prefix>&cUsage: /invest multiplier <player|all> <multiplier> <minutes>"

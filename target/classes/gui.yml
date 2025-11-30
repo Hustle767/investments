@@ -1,47 +1,58 @@
-# GUI layout for the Investments menu
-
 investments-gui:
-  title: "&aYour Investments"
-  size: 27  # must be multiple of 9
+  title: "            &8Investments"
+  size: 27
 
-  # Slots are 0-indexed
   delete-investment-slot: 11
   info-slot: 13
   collect-slot: 15
+  autocollect-slot: 24
 
   delete-item:
-    material: BARRIER
+    material: TNT
     name: "&cDelete Investment"
     lore:
-      - "&7Click to delete your entire"
+      - "&7Click to delete all of your"
       - "&7current invested capital."
       - ""
       - "&c&lWARNING: &7This will permanently"
       - "&7remove your invested amount."
 
   info-item:
-    material: BOOK
+    material: WRITABLE_BOOK
     name: "&eInvestment Information"
     lore:
       - "&7Amount invested: &a%amount_invested%"
       - "&7Current profit: &a%profit%"
       - ""
-      - "&7Click to enter an amount in chat"
-      - "&7to invest (same as /invest <amount>)."
+      - "&7Click, then either:"
+      - "&7 - Type a &araw amount &7(e.g. &e10000&7)"
+      - "&7 - Or type an &aoption number &7(e.g. &e1, 2, 3&7)"
+      - "&7Options are configured in &fpre-selected-investments&7."
 
   collect-item:
-    material: EMERALD
+    material: CHEST_MINECART
     name: "&aCollect Profits"
     lore:
       - "&7Uncollected profit: &a%profit%"
       - ""
-      - "&7Click to collect only your profits."
-      - "&8(Invested capital stays invested)"
+      - "&7&lLeft-click: &7Collect profits"
       - ""
       - "&7Auto-Collect: &a%autocollect_status%"
+
+  autocollect-item-on:
+    material: LIME_STAINED_GLASS_PANE
+    name: "&aAuto-Collect: ON"
+    lore:
+      - "&7Click to &cdisable &7auto-collect."
+
+  autocollect-item-off:
+    material: RED_STAINED_GLASS_PANE
+    name: "&cAuto-Collect: OFF"
+    lore:
+      - "&7Click to &aenable &7auto-collect."
 
   filler:
     enabled: true
     material: GRAY_STAINED_GLASS_PANE
     name: "&r"
-    slots: "all"   # or list of slots: [0,1,2,3,4,5,6,7,8]
+    slots: "all"

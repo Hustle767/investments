@@ -14,6 +14,8 @@ import com.jamplifier.investments.util.ChatInputManager;
 import com.jamplifier.investments.util.ConfigKeys;
 import com.jamplifier.investments.util.FoliaSchedulerUtil;
 import com.jamplifier.investments.util.MessageUtils;
+
+import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class InvestmentsPlugin extends JavaPlugin {
@@ -25,6 +27,7 @@ public class InvestmentsPlugin extends JavaPlugin {
     private InvestmentManager investmentManager;
     private ChatInputManager chatInputManager;
     private InterestService interestService;
+    
 
     public static InvestmentsPlugin getInstance() {
         return instance;
@@ -67,9 +70,13 @@ public class InvestmentsPlugin extends JavaPlugin {
                 new InvestmentsMenuListener(this, investmentManager, economyHook), this
         );
 
-        getCommand("invest").setExecutor(
-                new InvestCommand(this, investmentManager, economyHook)
-        );
+        InvestCommand investCommand = new InvestCommand(this, investmentManager, economyHook);
+        PluginCommand cmd = getCommand("invest");
+        if (cmd != null) {
+            cmd.setExecutor(investCommand);
+            cmd.setTabCompleter(investCommand);
+        }
+
     }
 
     @Override
@@ -77,6 +84,13 @@ public class InvestmentsPlugin extends JavaPlugin {
         if (storage != null) {
             storage.close();
         }
+    }
+    
+    public void reloadAll() {
+        reloadConfig();
+        MessageUtils.reload();
+        InvestmentsMenu.reloadConfig();
+        interestService.reloadFromConfig();
     }
 
     private InvestmentStorage createStorage() {
@@ -103,5 +117,9 @@ public class InvestmentsPlugin extends JavaPlugin {
 
     public ChatInputManager getChatInputManager() {
         return chatInputManager;
+    }
+    
+    public InterestService getInterestService() {
+        return interestService;
     }
 }

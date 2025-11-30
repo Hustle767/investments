@@ -1,6 +1,7 @@
 D:\Coding\eclipse\investments\src\main\java\com\jamplifier\investments\storage\sql\SqlInvestmentStorage.java
 D:\Coding\eclipse\investments\src\main\java\com\jamplifier\investments\gui\InvestmentsMenu.java
 D:\Coding\eclipse\investments\src\main\java\com\jamplifier\investments\investment\MaxInvestPermissionService.java
+D:\Coding\eclipse\investments\src\main\java\com\jamplifier\investments\investment\InterestService.java
 D:\Coding\eclipse\investments\src\main\java\com\jamplifier\investments\investment\InvestmentProfile.java
 D:\Coding\eclipse\investments\src\main\java\com\jamplifier\investments\util\MessageUtils.java
 D:\Coding\eclipse\investments\src\main\java\com\jamplifier\investments\economy\EconomyHook.java

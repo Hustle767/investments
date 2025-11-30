@@ -7,6 +7,7 @@ import com.jamplifier.investments.investment.InvestmentProfile;
 import com.jamplifier.investments.util.ChatInputManager;
 import com.jamplifier.investments.util.MessageUtils;
 import net.milkbowl.vault.economy.Economy;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -48,7 +49,7 @@ public class InvestmentsMenuListener implements Listener {
 
         int rawSlot = event.getRawSlot();
         if (rawSlot < 0 || rawSlot >= event.getInventory().getSize()) {
-            return; // clicked in own inventory
+            return; // player inventory
         }
 
         UUID uuid = player.getUniqueId();
@@ -56,16 +57,20 @@ public class InvestmentsMenuListener implements Listener {
 
         // DELETE investment
         if (rawSlot == InvestmentsMenu.getDeleteSlot()) {
+            if (profile.getInvestments().isEmpty()) {
+                MessageUtils.send(player, "no-investments");
+                return;
+            }
             investmentManager.deleteInvestments(player);
             MessageUtils.send(player, "investment-deleted");
             InvestmentsMenu.openFor(player, investmentManager.getProfile(uuid));
             return;
         }
 
-        // INFO -> chat input invest
+        // INFO -> chat input invest (supports pre-selected options)
         if (rawSlot == InvestmentsMenu.getInfoSlot()) {
             chatInputManager.await(player, (p, message) -> {
-                BigDecimal amount = parseAmount(message);
+                BigDecimal amount = resolveAmountFromInput(message);
                 if (amount == null) {
                     MessageUtils.send(p, "invalid-amount");
                     return;
@@ -77,9 +82,25 @@ public class InvestmentsMenuListener implements Listener {
             return;
         }
 
-        // COLLECT profits / toggle auto-collect
+        // Auto-collect toggle slot (red/green glass)
+        if (rawSlot == InvestmentsMenu.getAutocollectSlot()) {
+            if (!player.hasPermission(plugin.getConfig().getString("autocollect.permission", "investments.autocollect"))) {
+                MessageUtils.send(player, "no-permission");
+                return;
+            }
+
+            boolean newState = !profile.isAutoCollect();
+            profile.setAutoCollect(newState);
+            investmentManager.saveProfile(profile);
+
+            MessageUtils.send(player, newState ? "autocollect-enabled" : "autocollect-disabled");
+            InvestmentsMenu.openFor(player, investmentManager.getProfile(uuid));
+            return;
+        }
+
+        // COLLECT profits (left-click collect, right-click also toggle auto if you want)
         if (rawSlot == InvestmentsMenu.getCollectSlot()) {
-            // Right-click = toggle auto-collect (if permission)
+            // Right-click = toggle auto-collect (optional; keep or remove)
             if (event.getClick() == ClickType.RIGHT) {
                 if (!player.hasPermission(plugin.getConfig().getString("autocollect.permission", "investments.autocollect"))) {
                     MessageUtils.send(player, "no-permission");
@@ -110,6 +131,23 @@ public class InvestmentsMenuListener implements Listener {
 
             InvestmentsMenu.openFor(player, investmentManager.getProfile(uuid));
         }
+    }
+
+    /** Resolve input from chat: either pre-selected option index, or raw numeric amount. */
+    private BigDecimal resolveAmountFromInput(String input) {
+        String trimmed = input.trim();
+
+        // First: check pre-selected-investments.<input>
+        ConfigurationSection pre = plugin.getConfig().getConfigurationSection("pre-selected-investments");
+        if (pre != null && pre.isSet(trimmed)) {
+            double val = pre.getDouble(trimmed, -1.0D);
+            if (val > 0) {
+                return BigDecimal.valueOf(val);
+            }
+        }
+
+        // Fallback: parse as numeric amount
+        return parseAmount(trimmed);
     }
 
     private BigDecimal parseAmount(String input) {
