@@ -240,7 +240,7 @@ public class InvestCommand implements CommandExecutor, TabCompleter {
             ph.put("amount", amount.toPlainString());
             ph.put("min", minAmount.toPlainString());
 
-            MessageUtils.send(player, "min-investment", ph);
+            MessageUtils.send(player, "error-min-invest-amount", ph);
             return;
         }
 

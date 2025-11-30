@@ -12,15 +12,15 @@ no-profit: "<prefix>&cYou have no profits to collect."
 max-investments-reached: "<prefix>&cYou have reached your max investments (&e%limit%&c)."
 
 chat-enter-amount:
-  start: "<prefix><gray>Type an amount to invest (minimum <min>), or type one of the option numbers: <options>. Type 'cancel' to abort.</gray>"
-  cancelled: "<prefix><red>Investment input cancelled.</red>"
+  start: "<prefix>&7Type an amount to invest (minimum &a%min%&7), or type one of the option numbers: &e%options%&7. Type '&ccancel&7' to abort."
+  cancelled: "<prefix>&cInvestment input cancelled."
 
 autocollect-enabled: "<prefix>&aAuto-collect enabled."
 autocollect-disabled: "<prefix>&cAuto-collect disabled."
 
 notify-enabled: "<prefix>&aInvestment profit notifications &aENABLED&7."
 notify-disabled: "<prefix>&aInvestment profit notifications &cDISABLED&7."
-error-min-invest-amount: "<prefix><red>The minimum investment amount is <amount>.</red>"
+error-min-invest-amount: "<prefix>&cThe minimum investment is &a%min%&c. You tried &e%amount%&c."
 
 
 # Admin-ish
