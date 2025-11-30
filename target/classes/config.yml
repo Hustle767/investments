@@ -22,10 +22,10 @@ mongodb:
 
 # Base interest settings
 interest:
-  # interest applied per cycle in percent (e.g. 1.5 = 1.5%)
-  rate-percent: 1.0
-  # interval in minutes for profit ticks
-  interval-minutes: 10
+  # interest applied PER SECOND in percent (e.g. 0.01 = 0.01% per second)
+  rate-percent: 0.001
+  # how often to apply/update the accumulated interest in-game
+  interval-minutes: 1
 
 # Profit gain notifications
 notifications:

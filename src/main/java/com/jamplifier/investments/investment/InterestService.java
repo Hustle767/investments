@@ -67,7 +67,7 @@ public class InterestService {
     }
 
     public void reloadFromConfig() {
-        double rate = plugin.getConfig().getDouble(ConfigKeys.INTEREST_RATE_PERCENT, 1.0D);
+    	double rate = plugin.getConfig().getDouble(ConfigKeys.INTEREST_RATE_PERCENT, 1.0D);
         int minutes = plugin.getConfig().getInt(ConfigKeys.INTEREST_INTERVAL_MINUTES, 10);
 
         this.ratePercent = BigDecimal.valueOf(rate);
@@ -191,66 +191,44 @@ public class InterestService {
     private void tick() {
         BigDecimal hundred = BigDecimal.valueOf(100);
 
+        // How many seconds does a single tick represent?
+        long secondsThisTick = intervalTicks / 20L; // 20 ticks = 1 second
+        BigDecimal secondsBD = BigDecimal.valueOf(secondsThisTick);
+
         for (InvestmentProfile profile : investmentManager.getLoadedProfiles()) {
             boolean changed = false;
+            BigDecimal earnedThisTick = BigDecimal.ZERO;
 
             UUID owner = profile.getOwner();
-            BigDecimal multiplier = getEffectiveMultiplier(owner);
-            BigDecimal effectiveRate = ratePercent.multiply(multiplier);
+            BigDecimal multiplier = getEffectiveMultiplier(owner); // player + global multipliers
 
-            BigDecimal totalTickProfit = BigDecimal.ZERO;       // for display / notifications
-            BigDecimal autoCollectAmount = BigDecimal.ZERO;     // amount that will go straight to Vault
-
-            boolean autoCollect = profile.isAutoCollect();
+            // ratePercent = per-second %, so:
+            // effectivePercentForTick = ratePerSecond * seconds * multipliers
+            BigDecimal effectiveRateForTick = ratePercent
+                    .multiply(multiplier)
+                    .multiply(secondsBD);
 
             for (Investment inv : profile.getInvestments()) {
                 if (inv.getInvested().compareTo(BigDecimal.ZERO) <= 0) continue;
 
                 BigDecimal interest = inv.getInvested()
-                        .multiply(effectiveRate)
+                        .multiply(effectiveRateForTick)
                         .divide(hundred, 2, RoundingMode.DOWN);
 
-                if (interest.compareTo(BigDecimal.ZERO) <= 0) {
-                    continue;
-                }
-
-                totalTickProfit = totalTickProfit.add(interest);
-
-                if (autoCollect) {
-                    // don't accumulate profit in the investment, send to Vault instead
-                    autoCollectAmount = autoCollectAmount.add(interest);
-                } else {
-                    // old behavior: keep profit stored in the investment
+                if (interest.compareTo(BigDecimal.ZERO) > 0) {
                     inv.addProfit(interest);
+                    earnedThisTick = earnedThisTick.add(interest);
                     changed = true;
                 }
             }
 
-            // Save DB state if we modified investment profits
             if (changed) {
                 investmentManager.saveProfile(profile);
-            }
-
-            // Handle auto-collect Vault deposit
-            if (autoCollectAmount.compareTo(BigDecimal.ZERO) > 0) {
-                var econ = plugin.getEconomy();
-                if (econ != null) {
-                    Player player = Bukkit.getPlayer(owner);
-                    if (player != null) {
-                        BigDecimal finalAmount = autoCollectAmount;
-                        FoliaSchedulerUtil.runForEntity(player, () -> {
-                            econ.depositPlayer(player, finalAmount.doubleValue());
-                        });
-                    }
-                }
-            }
-
-            // Notification (for actual profit gained this tick, regardless of mode)
-            if (totalTickProfit.compareTo(BigDecimal.ZERO) > 0) {
-                sendNotification(owner, totalTickProfit, effectiveRate);
+                sendNotification(owner, earnedThisTick, effectiveRateForTick);
             }
         }
     }
+
 
     private void sendNotification(UUID uuid, BigDecimal amount, BigDecimal rate) {
         if (!notificationsEnabled) return;
