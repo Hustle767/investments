@@ -1,0 +1,16 @@
+com\jamplifier\investments\util\MessageUtils.class
+com\jamplifier\investments\storage\mongo\MongoInvestmentStorage.class
+com\jamplifier\investments\investment\InvestmentProfile.class
+com\jamplifier\investments\InvestmentsPlugin.class
+com\jamplifier\investments\gui\InvestmentsMenu.class
+com\jamplifier\investments\util\FoliaSchedulerUtil.class
+com\jamplifier\investments\command\InvestCommand.class
+com\jamplifier\investments\storage\sql\SqlInvestmentStorage.class
+com\jamplifier\investments\investment\InvestmentManager.class
+com\jamplifier\investments\investment\Investment.class
+com\jamplifier\investments\gui\InvestmentsMenuListener.class
+com\jamplifier\investments\economy\EconomyHook.class
+com\jamplifier\investments\storage\InvestmentStorage.class
+com\jamplifier\investments\investment\MaxInvestPermissionService.class
+com\jamplifier\investments\util\ChatInputManager.class
+com\jamplifier\investments\util\ConfigKeys.class

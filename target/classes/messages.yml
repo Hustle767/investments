@@ -1,0 +1,17 @@
+prefix: "&8[&aInvestments&8] &r"
+
+no-permission: "<prefix>&cYou don't have permission."
+invalid-amount: "<prefix>&cPlease enter a valid positive amount."
+not-enough-money: "<prefix>&cYou do not have enough money."
+invest-added: "<prefix>&aYou invested &e%amount%&a."
+investment-deleted: "<prefix>&cYour current investment was deleted."
+profit-collected: "<prefix>&aYou collected &e%amount%&a in profits."
+no-profit: "<prefix>&cYou have no profits to collect."
+max-investments-reached: "<prefix>&cYou have reached your max investments (&e%limit%&c)."
+
+chat-enter-amount:
+  start: "<prefix>&7Please type the amount you want to invest in chat, or type &ccancel&7."
+  cancelled: "<prefix>&cInvestment input cancelled."
+
+autocollect-enabled: "<prefix>&aAuto-collect enabled."
+autocollect-disabled: "<prefix>&cAuto-collect disabled."

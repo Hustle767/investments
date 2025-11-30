@@ -1,0 +1,47 @@
+# GUI layout for the Investments menu
+
+investments-gui:
+  title: "&aYour Investments"
+  size: 27  # must be multiple of 9
+
+  # Slots are 0-indexed
+  delete-investment-slot: 11
+  info-slot: 13
+  collect-slot: 15
+
+  delete-item:
+    material: BARRIER
+    name: "&cDelete Investment"
+    lore:
+      - "&7Click to delete your entire"
+      - "&7current invested capital."
+      - ""
+      - "&c&lWARNING: &7This will permanently"
+      - "&7remove your invested amount."
+
+  info-item:
+    material: BOOK
+    name: "&eInvestment Information"
+    lore:
+      - "&7Amount invested: &a%amount_invested%"
+      - "&7Current profit: &a%profit%"
+      - ""
+      - "&7Click to enter an amount in chat"
+      - "&7to invest (same as /invest <amount>)."
+
+  collect-item:
+    material: EMERALD
+    name: "&aCollect Profits"
+    lore:
+      - "&7Uncollected profit: &a%profit%"
+      - ""
+      - "&7Click to collect only your profits."
+      - "&8(Invested capital stays invested)"
+      - ""
+      - "&7Auto-Collect: &a%autocollect_status%"
+
+  filler:
+    enabled: true
+    material: GRAY_STAINED_GLASS_PANE
+    name: "&r"
+    slots: "all"   # or list of slots: [0,1,2,3,4,5,6,7,8]

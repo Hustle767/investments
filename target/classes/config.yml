@@ -1,0 +1,35 @@
+# Investment plugin configuration
+
+# Which storage backend to use: MYSQL or MONGODB
+storage-type: MYSQL
+
+mysql:
+  host: "localhost"
+  port: 3306
+  database: "investments"
+  username: "root"
+  password: "password"
+  use-ssl: false
+  max-pool-size: 10
+
+mongodb:
+  uri: "mongodb://localhost:27017"
+  database: "investments"
+  collection: "player_investments"
+
+# Base interest settings (we can flesh out logic later)
+interest:
+  # interest applied per cycle in percent (e.g. 1.5 = 1.5%)
+  rate-percent: 1.0
+  # interval in minutes for profit ticks
+  interval-minutes: 10
+
+# Max number of simultaneous investments per-player based on permission
+max-invest-permissions:
+  invest.default: 5
+  limit.vip: 10
+
+# Auto-collect settings
+autocollect:
+  enabled: true
+  permission: "investments.autocollect"

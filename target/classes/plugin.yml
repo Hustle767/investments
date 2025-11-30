@@ -1,0 +1,28 @@
+name: Investments
+main: com.jamplifier.investments.InvestmentsPlugin
+version: 1.0.0
+api-version: '1.21'
+folia-supported: true
+author: Jamplifier
+description: Simple GUI-based investments plugin with SQL + MongoDB storage
+
+depend:
+  - Vault
+
+commands:
+  invest:
+    description: Open your investments or invest an amount
+    usage: "/invest [amount]"
+    aliases: [investments]
+    permission: investments.use
+    permission-message: "&cYou don't have permission to use this."
+
+permissions:
+  investments.use:
+    default: true
+  investments.autocollect:
+    default: false
+  invest.default:
+    default: true
+  limit.vip:
+    default: false
