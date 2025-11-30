@@ -6,7 +6,9 @@ import com.jamplifier.investments.util.FoliaSchedulerUtil;
 import com.jamplifier.investments.util.MessageUtils;
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import net.kyori.adventure.text.Component;
+import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 
@@ -24,6 +26,10 @@ public class InterestService {
 
     private BigDecimal ratePercent;
     private long intervalTicks;
+
+    // NEW: autocollect config cache
+    private boolean autocollectEnabled;
+    private String autocollectPermission;
 
     // multipliers
     private static class MultiplierData {
@@ -52,7 +58,6 @@ public class InterestService {
     private String notifyActionbarMessage;
 
     // per-player toggle (override default)
-    // if a player UUID is in this map, the value is their explicit "enabled" state
     private final Map<UUID, Boolean> notifyOverrides = new ConcurrentHashMap<>();
 
     public InterestService(InvestmentsPlugin plugin, InvestmentManager investmentManager) {
@@ -68,8 +73,9 @@ public class InterestService {
         this.ratePercent = BigDecimal.valueOf(rate);
         this.intervalTicks = Math.max(1L, minutes * 60L * 20L);
 
-        // notifications config
         var cfg = plugin.getConfig();
+
+        // notifications config
         notificationsEnabled = cfg.getBoolean("notifications.enabled", true);
         notifyDefaultEnabled = cfg.getBoolean("notifications.default-enabled", true);
         notifyChatEnabled = cfg.getBoolean("notifications.chat.enabled", true);
@@ -79,6 +85,10 @@ public class InterestService {
         notifyActionbarMessage = cfg.getString("notifications.actionbar.message",
                 "&a+%amount% &7investment profit (&e%rate%%%&7)");
 
+        // NEW: autocollect config
+        autocollectEnabled = cfg.getBoolean("autocollect.enabled", true);
+        autocollectPermission = cfg.getString("autocollect.permission", "investments.autocollect");
+
         restart();
     }
 
@@ -87,7 +97,6 @@ public class InterestService {
     }
 
     private void restart() {
-        // cancel old tasks if any
         if (foliaTask != null) {
             foliaTask.cancel();
             foliaTask = null;
@@ -122,14 +131,14 @@ public class InterestService {
         }
     }
 
-    /** Set a player-specific multiplier for X minutes (e.g., 2.0 = 2x). */
+    // ---- Multipliers ----
+
     public void setPlayerMultiplier(UUID uuid, BigDecimal multiplier, int minutes) {
         long durationMillis = Math.max(0, minutes) * 60L * 1000L;
         long expiresAt = System.currentTimeMillis() + durationMillis;
         playerMultipliers.put(uuid, new MultiplierData(multiplier, expiresAt));
     }
 
-    /** Set a global multiplier for X minutes for everyone. */
     public void setGlobalMultiplier(BigDecimal multiplier, int minutes) {
         long durationMillis = Math.max(0, minutes) * 60L * 1000L;
         long expiresAt = System.currentTimeMillis() + durationMillis;
@@ -184,11 +193,15 @@ public class InterestService {
 
         for (InvestmentProfile profile : investmentManager.getLoadedProfiles()) {
             boolean changed = false;
-            BigDecimal earnedThisTick = BigDecimal.ZERO;
 
             UUID owner = profile.getOwner();
             BigDecimal multiplier = getEffectiveMultiplier(owner);
             BigDecimal effectiveRate = ratePercent.multiply(multiplier);
+
+            BigDecimal totalTickProfit = BigDecimal.ZERO;       // for display / notifications
+            BigDecimal autoCollectAmount = BigDecimal.ZERO;     // amount that will go straight to Vault
+
+            boolean autoCollect = profile.isAutoCollect();
 
             for (Investment inv : profile.getInvestments()) {
                 if (inv.getInvested().compareTo(BigDecimal.ZERO) <= 0) continue;
@@ -197,16 +210,44 @@ public class InterestService {
                         .multiply(effectiveRate)
                         .divide(hundred, 2, RoundingMode.DOWN);
 
-                if (interest.compareTo(BigDecimal.ZERO) > 0) {
+                if (interest.compareTo(BigDecimal.ZERO) <= 0) {
+                    continue;
+                }
+
+                totalTickProfit = totalTickProfit.add(interest);
+
+                if (autoCollect) {
+                    // don't accumulate profit in the investment, send to Vault instead
+                    autoCollectAmount = autoCollectAmount.add(interest);
+                } else {
+                    // old behavior: keep profit stored in the investment
                     inv.addProfit(interest);
-                    earnedThisTick = earnedThisTick.add(interest);
                     changed = true;
                 }
             }
 
+            // Save DB state if we modified investment profits
             if (changed) {
                 investmentManager.saveProfile(profile);
-                sendNotification(owner, earnedThisTick, effectiveRate);
+            }
+
+            // Handle auto-collect Vault deposit
+            if (autoCollectAmount.compareTo(BigDecimal.ZERO) > 0) {
+                var econ = plugin.getEconomy();
+                if (econ != null) {
+                    Player player = Bukkit.getPlayer(owner);
+                    if (player != null) {
+                        BigDecimal finalAmount = autoCollectAmount;
+                        FoliaSchedulerUtil.runForEntity(player, () -> {
+                            econ.depositPlayer(player, finalAmount.doubleValue());
+                        });
+                    }
+                }
+            }
+
+            // Notification (for actual profit gained this tick, regardless of mode)
+            if (totalTickProfit.compareTo(BigDecimal.ZERO) > 0) {
+                sendNotification(owner, totalTickProfit, effectiveRate);
             }
         }
     }
@@ -219,7 +260,6 @@ public class InterestService {
         Player player = Bukkit.getPlayer(uuid);
         if (player == null) return;
 
-        // Prepare placeholders
         Map<String, String> placeholders = new HashMap<>();
         placeholders.put("amount", amount.toPlainString());
         placeholders.put("rate", rate.toPlainString());

@@ -14,6 +14,10 @@ import com.jamplifier.investments.util.ChatInputManager;
 import com.jamplifier.investments.util.ConfigKeys;
 import com.jamplifier.investments.util.FoliaSchedulerUtil;
 import com.jamplifier.investments.util.MessageUtils;
+import net.milkbowl.vault.economy.Economy;
+
+
+import net.milkbowl.vault.economy.Economy;
 
 import java.util.Locale;
 
@@ -146,5 +150,8 @@ public class InvestmentsPlugin extends JavaPlugin {
     
     public InterestService getInterestService() {
         return interestService;
+    }
+    public Economy getEconomy() {
+        return (economyHook != null) ? economyHook.getEconomy() : null;
     }
 }
