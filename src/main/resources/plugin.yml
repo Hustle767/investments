@@ -9,6 +9,9 @@ description: Simple GUI-based investments plugin with SQL + MongoDB storage
 depend:
   - Vault
 
+softdepend:
+  - PlaceholderAPI
+
 commands:
   invest:
     description: Open your investments or invest an amount

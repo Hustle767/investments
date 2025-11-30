@@ -5,6 +5,7 @@ import com.jamplifier.investments.economy.EconomyHook;
 import com.jamplifier.investments.gui.InvestmentsMenu;
 import com.jamplifier.investments.gui.InvestmentsMenuListener;
 import com.jamplifier.investments.investment.InvestmentManager;
+import com.jamplifier.investments.placeholder.InvestmentsPlaceholderExpansion;
 import com.jamplifier.investments.investment.InterestService;
 import com.jamplifier.investments.storage.InvestmentStorage;
 import com.jamplifier.investments.storage.mongo.MongoInvestmentStorage;
@@ -21,7 +22,9 @@ import net.milkbowl.vault.economy.Economy;
 
 import java.util.Locale;
 
+import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class InvestmentsPlugin extends JavaPlugin {
@@ -81,6 +84,15 @@ public class InvestmentsPlugin extends JavaPlugin {
         if (cmd != null) {
             cmd.setExecutor(investCommand);
             cmd.setTabCompleter(investCommand);
+        }
+        
+     // PlaceholderAPI hook
+        Plugin papi = Bukkit.getPluginManager().getPlugin("PlaceholderAPI");
+        if (papi != null && papi.isEnabled()) {
+            new InvestmentsPlaceholderExpansion(this, investmentManager, interestService).register();
+            getLogger().info("[Investments] Hooked into PlaceholderAPI.");
+        } else {
+            getLogger().info("[Investments] PlaceholderAPI not found; PAPI placeholders disabled.");
         }
 
     }
