@@ -1,5 +1,5 @@
 # Investment plugin configuration
-# Which storage backend to use: SQLITE, MYSQL, or MONGODB
+# Which storage backend to use: SQLITE, MYSQL, or MONGODB (MONGO DOES NOT WORK ATM)
 storage-type: SQLITE
 
 sqlite:
@@ -15,6 +15,7 @@ mysql:
   use-ssl: false
   max-pool-size: 10
 
+# MONGO NOT WORKING PROPERLY
 mongodb:
   uri: "mongodb://localhost:27017"
   database: "investments"

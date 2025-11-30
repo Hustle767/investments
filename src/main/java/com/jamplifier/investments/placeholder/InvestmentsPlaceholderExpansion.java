@@ -10,8 +10,10 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Locale;
 import java.util.UUID;
+
 
 public class InvestmentsPlaceholderExpansion extends PlaceholderExpansion {
 
@@ -20,32 +22,30 @@ public class InvestmentsPlaceholderExpansion extends PlaceholderExpansion {
     private final InterestService interestService;
 
     public InvestmentsPlaceholderExpansion(InvestmentsPlugin plugin,
-                                           InvestmentManager investmentManager,
-                                           InterestService interestService) {
-        this.plugin = plugin;
-        this.investmentManager = investmentManager;
-        this.interestService = interestService;
-    }
+            InvestmentManager investmentManager,
+            InterestService interestService) {
+this.plugin = plugin;
+this.investmentManager = investmentManager;
+this.interestService = interestService;
+}
 
     @Override
-    public @NotNull String getIdentifier() {
-        // %investments_<param>% ...
+    public String getIdentifier() {
         return "investments";
     }
 
     @Override
-    public @NotNull String getAuthor() {
+    public String getAuthor() {
         return String.join(", ", plugin.getDescription().getAuthors());
     }
 
     @Override
-    public @NotNull String getVersion() {
+    public String getVersion() {
         return plugin.getDescription().getVersion();
     }
 
     @Override
     public boolean persist() {
-        // keep this expansion registered across /papi reload
         return true;
     }
 
@@ -55,46 +55,69 @@ public class InvestmentsPlaceholderExpansion extends PlaceholderExpansion {
     }
 
     @Override
-    public String onPlaceholderRequest(Player player, @NotNull String params) {
-        if (player == null) {
-            return "";
-        }
+    public String onPlaceholderRequest(Player player, String params) {
+        if (player == null) return "";
 
-        params = params.toLowerCase(Locale.ROOT);
-        UUID uuid = player.getUniqueId();
-        InvestmentProfile profile = investmentManager.getProfile(uuid);
+        InvestmentProfile profile = investmentManager.getProfile(player.getUniqueId());
+        if (profile == null) return "";
 
-        switch (params) {
-            case "amount_invested": {
-                BigDecimal total = BigDecimal.ZERO;
-                for (Investment inv : profile.getInvestments()) {
-                    total = total.add(inv.getInvested());
-                }
-                return total.toPlainString();
-            }
+        switch (params.toLowerCase(Locale.ROOT)) {
 
-            case "profit": {
-                BigDecimal totalProfit = BigDecimal.ZERO;
-                for (Investment inv : profile.getInvestments()) {
-                    totalProfit = totalProfit.add(inv.getProfit());
-                }
-                return totalProfit.toPlainString();
-            }
+            case "amount_invested":
+                return formatMoney(totalInvested(profile));
 
-            case "interest_rate": {
-                // display the base per-second % rate (or whatever your InterestService stores)
-                BigDecimal rate = interestService.getRatePercent();
-                return rate.toPlainString();
-            }
+            case "profit":
+                return formatMoney(totalProfit(profile));
 
-            case "autocollect_status": {
-                boolean enabled = profile.isAutoCollect();
-                // color codes so menus/holograms show nicely
-                return enabled ? "&aON" : "&cOFF";
-            }
+            case "interest_rate":
+                // base per-second percent
+                BigDecimal rate = interestService.getBaseRatePercentPerSecond();
+                return rate.stripTrailingZeros().toPlainString() + "%/s";
+
+            case "autocollect_status":
+                return profile.isAutoCollect() ? "ON" : "OFF";
+
+            // NEW: $ earned per second, e.g. "$0.10/s"
+            case "earn_per_second":
+                return formatPerSecond(profile);
 
             default:
-                return "";
+                return null;
         }
+    }
+
+    private BigDecimal totalInvested(InvestmentProfile profile) {
+        BigDecimal total = BigDecimal.ZERO;
+        for (Investment inv : profile.getInvestments()) {
+            total = total.add(inv.getInvested());
+        }
+        return total;
+    }
+
+    private BigDecimal totalProfit(InvestmentProfile profile) {
+        BigDecimal total = BigDecimal.ZERO;
+        for (Investment inv : profile.getInvestments()) {
+            total = total.add(inv.getProfit());
+        }
+        return total;
+    }
+
+    private String formatPerSecond(InvestmentProfile profile) {
+        BigDecimal invested = totalInvested(profile);
+        if (invested.compareTo(BigDecimal.ZERO) <= 0) {
+            return "$0.00/s";
+        }
+
+        BigDecimal ratePercent = interestService.getBaseRatePercentPerSecond();
+        BigDecimal perSecond = invested
+                .multiply(ratePercent)
+                .divide(BigDecimal.valueOf(100), 2, RoundingMode.DOWN);
+
+        return "$" + perSecond.toPlainString() + "/s";
+    }
+
+    private String formatMoney(BigDecimal value) {
+        if (value == null) return "$0.00";
+        return "$" + value.setScale(2, RoundingMode.DOWN).toPlainString();
     }
 }

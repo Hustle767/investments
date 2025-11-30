@@ -260,8 +260,12 @@ public class InterestService {
             }
         });
     }
-    
+    // GETTERS
     public BigDecimal getRatePercent() {
+        return ratePercent;
+    }
+    
+    public BigDecimal getBaseRatePercentPerSecond() {
         return ratePercent;
     }
 

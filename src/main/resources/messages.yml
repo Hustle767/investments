@@ -23,7 +23,7 @@ notify-disabled: "<prefix>&aInvestment profit notifications &cDISABLED&7."
 error-min-invest-amount: "<prefix>&cThe minimum investment is &a%min%&c. You tried &e%amount%&c."
 
 
-# Admin-ish
+# Admin
 admin-reload: "<prefix>&aConfigs reloaded."
 admin-player-not-found: "<prefix>&cPlayer '&f%player%&c' not found."
 admin-delete-success: "<prefix>&aDeleted investments for &f%player%&a."

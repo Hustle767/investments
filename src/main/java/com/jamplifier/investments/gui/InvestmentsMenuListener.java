@@ -68,8 +68,12 @@ public class InvestmentsMenuListener implements Listener {
             return;
         }
 
-        // INFO -> chat input invest (supports pre-selected options)
+     // INFO -> chat input invest (supports pre-selected options)
         if (rawSlot == InvestmentsMenu.getInfoSlot()) {
+
+            // Close GUI so they can immediately type in chat
+            player.closeInventory();
+
             chatInputManager.await(player, (p, message) -> {
                 BigDecimal amount = resolveAmountFromInput(message);
                 if (amount == null) {
@@ -78,10 +82,13 @@ public class InvestmentsMenuListener implements Listener {
                 }
 
                 handleInvest(p, amount);
+
+                // Re-open GUI after a successful invest
                 InvestmentsMenu.openFor(p, investmentManager.getProfile(p.getUniqueId()));
             });
             return;
         }
+
 
         // Auto-collect toggle slot (red/green glass)
         if (rawSlot == InvestmentsMenu.getAutocollectSlot()) {
