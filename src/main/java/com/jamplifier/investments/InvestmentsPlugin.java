@@ -5,6 +5,7 @@ import com.jamplifier.investments.economy.EconomyHook;
 import com.jamplifier.investments.gui.InvestmentsMenu;
 import com.jamplifier.investments.gui.InvestmentsMenuListener;
 import com.jamplifier.investments.investment.InvestmentManager;
+import com.jamplifier.investments.investment.InterestService;
 import com.jamplifier.investments.storage.InvestmentStorage;
 import com.jamplifier.investments.storage.mongo.MongoInvestmentStorage;
 import com.jamplifier.investments.storage.sql.SqlInvestmentStorage;
@@ -23,6 +24,7 @@ public class InvestmentsPlugin extends JavaPlugin {
     private InvestmentStorage storage;
     private InvestmentManager investmentManager;
     private ChatInputManager chatInputManager;
+    private InterestService interestService;
 
     public static InvestmentsPlugin getInstance() {
         return instance;
@@ -55,6 +57,10 @@ public class InvestmentsPlugin extends JavaPlugin {
 
         this.investmentManager = new InvestmentManager(this, storage);
 
+        // Interest ticking
+        this.interestService = new InterestService(this, investmentManager);
+        interestService.start();
+
         this.chatInputManager = new ChatInputManager();
         getServer().getPluginManager().registerEvents(chatInputManager, this);
         getServer().getPluginManager().registerEvents(
@@ -86,7 +92,6 @@ public class InvestmentsPlugin extends JavaPlugin {
                 return new SqliteInvestmentStorage(this);
         }
     }
-
 
     public EconomyHook getEconomyHook() {
         return economyHook;

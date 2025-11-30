@@ -5,9 +5,9 @@ import com.jamplifier.investments.storage.InvestmentStorage;
 import org.bukkit.entity.Player;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class InvestmentManager {
 
@@ -15,7 +15,7 @@ public class InvestmentManager {
     private final InvestmentStorage storage;
     private final MaxInvestPermissionService maxInvestPermissionService;
 
-    private final Map<UUID, InvestmentProfile> cache = new HashMap<>();
+    private final Map<UUID, InvestmentProfile> cache = new ConcurrentHashMap<>();
 
     public InvestmentManager(InvestmentsPlugin plugin, InvestmentStorage storage) {
         this.plugin = plugin;
@@ -67,5 +67,10 @@ public class InvestmentManager {
         InvestmentProfile profile = getProfile(player.getUniqueId());
         profile.deleteAllInvestments();
         saveProfile(profile);
+    }
+
+    /** All currently loaded profiles (players that have interacted with the plugin). */
+    public Iterable<InvestmentProfile> getLoadedProfiles() {
+        return cache.values();
     }
 }
