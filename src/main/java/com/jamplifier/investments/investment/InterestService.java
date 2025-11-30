@@ -3,12 +3,16 @@ package com.jamplifier.investments.investment;
 import com.jamplifier.investments.InvestmentsPlugin;
 import com.jamplifier.investments.util.ConfigKeys;
 import com.jamplifier.investments.util.FoliaSchedulerUtil;
+import com.jamplifier.investments.util.MessageUtils;
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,10 +43,22 @@ public class InterestService {
     private ScheduledTask foliaTask;
     private BukkitTask bukkitTask;
 
+    // notification settings
+    private boolean notificationsEnabled;
+    private boolean notifyDefaultEnabled;
+    private boolean notifyChatEnabled;
+    private boolean notifyActionbarEnabled;
+    private String notifyChatMessage;
+    private String notifyActionbarMessage;
+
+    // per-player toggle (override default)
+    // if a player UUID is in this map, the value is their explicit "enabled" state
+    private final Map<UUID, Boolean> notifyOverrides = new ConcurrentHashMap<>();
+
     public InterestService(InvestmentsPlugin plugin, InvestmentManager investmentManager) {
         this.plugin = plugin;
         this.investmentManager = investmentManager;
-        reloadFromConfig(); // sets rate + interval, starts task
+        reloadFromConfig();
     }
 
     public void reloadFromConfig() {
@@ -51,6 +67,17 @@ public class InterestService {
 
         this.ratePercent = BigDecimal.valueOf(rate);
         this.intervalTicks = Math.max(1L, minutes * 60L * 20L);
+
+        // notifications config
+        var cfg = plugin.getConfig();
+        notificationsEnabled = cfg.getBoolean("notifications.enabled", true);
+        notifyDefaultEnabled = cfg.getBoolean("notifications.default-enabled", true);
+        notifyChatEnabled = cfg.getBoolean("notifications.chat.enabled", true);
+        notifyChatMessage = cfg.getString("notifications.chat.message",
+                "&8[&aInvestments&8] &7You earned &a%amount% &7profit (&e%rate%%%&7).");
+        notifyActionbarEnabled = cfg.getBoolean("notifications.actionbar.enabled", true);
+        notifyActionbarMessage = cfg.getString("notifications.actionbar.message",
+                "&a+%amount% &7investment profit (&e%rate%%%&7)");
 
         restart();
     }
@@ -109,6 +136,23 @@ public class InterestService {
         globalMultiplier = new MultiplierData(multiplier, expiresAt);
     }
 
+    // ---- Notification toggles ----
+
+    public boolean toggleNotify(UUID uuid) {
+        boolean current = isNotifyEnabled(uuid);
+        boolean next = !current;
+        notifyOverrides.put(uuid, next);
+        return next;
+    }
+
+    public boolean isNotifyEnabled(UUID uuid) {
+        Boolean override = notifyOverrides.get(uuid);
+        if (override != null) {
+            return override;
+        }
+        return notifyDefaultEnabled;
+    }
+
     private BigDecimal getEffectiveMultiplier(UUID uuid) {
         long now = System.currentTimeMillis();
         BigDecimal result = BigDecimal.ONE;
@@ -140,8 +184,10 @@ public class InterestService {
 
         for (InvestmentProfile profile : investmentManager.getLoadedProfiles()) {
             boolean changed = false;
+            BigDecimal earnedThisTick = BigDecimal.ZERO;
 
-            BigDecimal multiplier = getEffectiveMultiplier(profile.getOwner());
+            UUID owner = profile.getOwner();
+            BigDecimal multiplier = getEffectiveMultiplier(owner);
             BigDecimal effectiveRate = ratePercent.multiply(multiplier);
 
             for (Investment inv : profile.getInvestments()) {
@@ -153,13 +199,47 @@ public class InterestService {
 
                 if (interest.compareTo(BigDecimal.ZERO) > 0) {
                     inv.addProfit(interest);
+                    earnedThisTick = earnedThisTick.add(interest);
                     changed = true;
                 }
             }
 
             if (changed) {
                 investmentManager.saveProfile(profile);
+                sendNotification(owner, earnedThisTick, effectiveRate);
             }
         }
+    }
+
+    private void sendNotification(UUID uuid, BigDecimal amount, BigDecimal rate) {
+        if (!notificationsEnabled) return;
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) return;
+        if (!isNotifyEnabled(uuid)) return;
+
+        Player player = Bukkit.getPlayer(uuid);
+        if (player == null) return;
+
+        // Prepare placeholders
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("amount", amount.toPlainString());
+        placeholders.put("rate", rate.toPlainString());
+
+        FoliaSchedulerUtil.runForEntity(player, () -> {
+            if (notifyChatEnabled) {
+                String msg = notifyChatMessage;
+                for (Map.Entry<String, String> e : placeholders.entrySet()) {
+                    msg = msg.replace("%" + e.getKey() + "%", e.getValue());
+                }
+                player.sendMessage(MessageUtils.color(msg));
+            }
+
+            if (notifyActionbarEnabled) {
+                String msg = notifyActionbarMessage;
+                for (Map.Entry<String, String> e : placeholders.entrySet()) {
+                    msg = msg.replace("%" + e.getKey() + "%", e.getValue());
+                }
+                player.sendActionBar(Component.text(MessageUtils.color(msg)));
+            }
+        });
     }
 }

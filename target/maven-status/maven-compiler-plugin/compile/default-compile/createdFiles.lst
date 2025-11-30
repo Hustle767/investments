@@ -6,6 +6,7 @@ com\jamplifier\investments\InvestmentsPlugin.class
 com\jamplifier\investments\gui\InvestmentsMenu.class
 com\jamplifier\investments\util\FoliaSchedulerUtil.class
 com\jamplifier\investments\command\InvestCommand.class
+com\jamplifier\investments\util\AmountUtil.class
 com\jamplifier\investments\storage\sql\SqlInvestmentStorage.class
 com\jamplifier\investments\investment\InvestmentManager.class
 com\jamplifier\investments\investment\InterestService.class

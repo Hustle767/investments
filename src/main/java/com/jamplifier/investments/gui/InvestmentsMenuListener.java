@@ -6,6 +6,7 @@ import com.jamplifier.investments.investment.InvestmentManager;
 import com.jamplifier.investments.investment.InvestmentProfile;
 import com.jamplifier.investments.util.ChatInputManager;
 import com.jamplifier.investments.util.MessageUtils;
+import com.jamplifier.investments.util.AmountUtil;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
@@ -147,7 +148,7 @@ public class InvestmentsMenuListener implements Listener {
         }
 
         // Fallback: parse as numeric amount
-        return parseAmount(trimmed);
+        return AmountUtil.parseAmount(trimmed);
     }
 
     private BigDecimal parseAmount(String input) {

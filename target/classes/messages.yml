@@ -18,6 +18,10 @@ chat-enter-amount:
 autocollect-enabled: "<prefix>&aAuto-collect enabled."
 autocollect-disabled: "<prefix>&cAuto-collect disabled."
 
+notify-enabled: "<prefix>&aInvestment profit notifications &aENABLED&7."
+notify-disabled: "<prefix>&aInvestment profit notifications &cDISABLED&7."
+
+
 # Admin-ish
 admin-reload: "<prefix>&aConfigs reloaded."
 admin-player-not-found: "<prefix>&cPlayer '&f%player%&c' not found."

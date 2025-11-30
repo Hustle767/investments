@@ -26,8 +26,6 @@
         <!-- Build settings -->
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
-        
-        
     </properties>
 
     <repositories>
@@ -37,7 +35,7 @@
             <url>https://repo.papermc.io/repository/maven-public/</url>
         </repository>
 
-        <!-- Vault API (usually via jitpack or central; central has it) -->
+        <!-- Vault API -->
         <repository>
             <id>sonatype-oss</id>
             <url>https://oss.sonatype.org/content/groups/public/</url>
@@ -87,13 +85,13 @@
             <artifactId>mongodb-driver-sync</artifactId>
             <version>${mongodb.driver.version}</version>
         </dependency>
-        
-        <!-- SQlite driver (sync) -->
+
+        <!-- SQLite driver -->
         <dependency>
-        	<groupId>org.xerial</groupId>
-        	<artifactId>sqlite-jdbc</artifactId>
-        	<version>${sqlite.version}</version>
-    	</dependency>
+            <groupId>org.xerial</groupId>
+            <artifactId>sqlite-jdbc</artifactId>
+            <version>${sqlite.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>org.jetbrains</groupId>
@@ -101,12 +99,12 @@
             <version>24.1.0</version>
             <scope>compile</scope>
         </dependency>
-    
     </dependencies>
 
     <build>
+        <finalName>${project.artifactId}-${project.version}</finalName>
+
         <plugins>
-        
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -117,7 +115,7 @@
                 </configuration>
             </plugin>
 
-            <!-- Shade to bundle Hikari, MySQL, Mongo into the jar -->
+            <!-- Shade to bundle Hikari, MySQL, Mongo, SQLite into ONE jar -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
@@ -129,8 +127,11 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
+                            <!-- overwrite main jar, don't create a -shaded extra -->
+                            <shadedArtifactAttached>false</shadedArtifactAttached>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+
                             <relocations>
-                        
                                 <relocation>
                                     <pattern>com.zaxxer.hikari</pattern>
                                     <shadedPattern>com.jamplifier.investments.libs.hikari</shadedPattern>
@@ -143,8 +144,11 @@
                                     <pattern>com.mongodb</pattern>
                                     <shadedPattern>com.jamplifier.investments.libs.mongodb</shadedPattern>
                                 </relocation>
+                                <relocation>
+                                    <pattern>org.sqlite</pattern>
+                                    <shadedPattern>com.jamplifier.investments.libs.sqlite</shadedPattern>
+                                </relocation>
                             </relocations>
-                            <createDependencyReducedPom>false</createDependencyReducedPom>
                         </configuration>
                     </execution>
                 </executions>

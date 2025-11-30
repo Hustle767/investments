@@ -16,6 +16,8 @@ investments-gui:
       - ""
       - "&c&lWARNING: &7This will permanently"
       - "&7remove your invested amount."
+      - ""
+      - "&4No Refunds!"
 
   info-item:
     material: WRITABLE_BOOK
@@ -23,9 +25,10 @@ investments-gui:
     lore:
       - "&7Amount invested: &a%amount_invested%"
       - "&7Current profit: &a%profit%"
+      - "&7Base interest rate: &e%interest_rate%%"
       - ""
       - "&7Click, then either:"
-      - "&7 - Type a &araw amount &7(e.g. &e10000&7)"
+      - "&7 - Type a &aamount &7(e.g. &e10k&7)"
       - "&7 - Or type an &aoption number &7(e.g. &e1, 2, 3&7)"
       - "&7Options are configured in &fpre-selected-investments&7."
 

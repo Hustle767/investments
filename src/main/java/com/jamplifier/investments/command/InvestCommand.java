@@ -1,6 +1,8 @@
 package com.jamplifier.investments.command;
 
+import com.jamplifier.investments.util.AmountUtil;
 import com.jamplifier.investments.InvestmentsPlugin;
+import com.jamplifier.investments.investment.InterestService;
 import com.jamplifier.investments.economy.EconomyHook;
 import com.jamplifier.investments.gui.InvestmentsMenu;
 import com.jamplifier.investments.investment.InvestmentManager;
@@ -65,6 +67,17 @@ public class InvestCommand implements CommandExecutor, TabCompleter {
                     }
                     handleAdminMultiplier(sender, args);
                     return true;
+                    
+                case "notify":
+                    if (!(sender instanceof Player)) {
+                        sender.sendMessage("Players only.");
+                        return true;
+                    }
+                    Player p = (Player) sender;
+                    boolean nowEnabled = interestService.toggleNotify(p.getUniqueId());
+                    MessageUtils.send(p, nowEnabled ? "notify-enabled" : "notify-disabled");
+                    return true;
+             
             }
         }
 
@@ -89,16 +102,12 @@ public class InvestCommand implements CommandExecutor, TabCompleter {
         }
 
         // /invest <amount>
-        if (!isNumeric(args[0])) {
-            MessageUtils.send(player, "invalid-amount");
-            return true;
-        }
-
-        BigDecimal amount = parseAmount(args[0]);
+        BigDecimal amount = AmountUtil.parseAmount(args[0]);
         if (amount == null) {
             MessageUtils.send(player, "invalid-amount");
             return true;
         }
+
 
         handleInvest(player, amount);
         return true;
@@ -279,6 +288,8 @@ public class InvestCommand implements CommandExecutor, TabCompleter {
             if (sender.hasPermission("investments.admin.multiplier")) {
                 completions.add("multiplier");
             }
+            
+            completions.add("notify");
 
             return partial(completions, args[0]);
         }
