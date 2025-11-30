@@ -30,6 +30,7 @@ public class InvestmentManager {
             return profile;
         });
     }
+    
 
     public void saveProfile(InvestmentProfile profile) {
         profile.save(storage);
@@ -39,10 +40,10 @@ public class InvestmentManager {
         return maxInvestPermissionService.getMaxInvestments(player);
     }
 
-    /**
-     * Try to add a new investment for this player.
-     * Returns true if created, false if limit reached.
-     */
+    public void reloadPermissions() {
+        maxInvestPermissionService.reload();
+    }
+    
     public boolean addInvestment(Player player, BigDecimal amount) {
         InvestmentProfile profile = getProfile(player.getUniqueId());
         int max = getMaxInvestments(player);
@@ -68,6 +69,8 @@ public class InvestmentManager {
         profile.deleteAllInvestments();
         saveProfile(profile);
     }
+    
+    
 
     /** All currently loaded profiles (players that have interacted with the plugin). */
     public Iterable<InvestmentProfile> getLoadedProfiles() {

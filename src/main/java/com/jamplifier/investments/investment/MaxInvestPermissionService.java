@@ -1,17 +1,16 @@
 package com.jamplifier.investments.investment;
 
 import com.jamplifier.investments.InvestmentsPlugin;
-import com.jamplifier.investments.util.ConfigKeys;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.Map;
 
 public class MaxInvestPermissionService {
 
     private final InvestmentsPlugin plugin;
-    private final Map<String, Integer> limitsByPermission = new LinkedHashMap<>();
+    private final Map<String, Integer> limits = new HashMap<>();
 
     public MaxInvestPermissionService(InvestmentsPlugin plugin) {
         this.plugin = plugin;
@@ -19,31 +18,25 @@ public class MaxInvestPermissionService {
     }
 
     public void reload() {
-        limitsByPermission.clear();
-
-        ConfigurationSection section = plugin.getConfig().getConfigurationSection(ConfigKeys.MAX_INVEST_PERMISSIONS);
-        if (section == null) {
+        limits.clear();
+        ConfigurationSection sec = plugin.getConfig().getConfigurationSection("max-invest-permissions");
+        if (sec == null) {
             return;
         }
 
-        for (String perm : section.getKeys(false)) {
-            int limit = section.getInt(perm, 0);
-            limitsByPermission.put(perm, limit);
+        for (String perm : sec.getKeys(false)) {
+            int value = sec.getInt(perm, 0);
+            if (value > 0) {
+                limits.put(perm, value);
+            }
         }
     }
 
-    /**
-     * Returns the highest investment limit for this player based on permissions.
-     * If the player has none of the listed permissions, returns 0.
-     */
     public int getMaxInvestments(Player player) {
         int max = 0;
-        for (Map.Entry<String, Integer> entry : limitsByPermission.entrySet()) {
-            String perm = entry.getKey();
-            int limit = entry.getValue();
-
-            if (player.hasPermission(perm) && limit > max) {
-                max = limit;
+        for (Map.Entry<String, Integer> e : limits.entrySet()) {
+            if (player.hasPermission(e.getKey()) && e.getValue() > max) {
+                max = e.getValue();
             }
         }
         return max;

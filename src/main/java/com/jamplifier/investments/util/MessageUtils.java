@@ -1,87 +1,77 @@
 package com.jamplifier.investments.util;
 
+import com.jamplifier.investments.InvestmentsPlugin;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
-import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 public final class MessageUtils {
 
-    private static JavaPlugin plugin;
+    private static InvestmentsPlugin plugin;
     private static FileConfiguration messages;
-    private static String prefix = "";
 
     private MessageUtils() {
     }
 
-    public static void init(JavaPlugin pl) {
+    public static void init(InvestmentsPlugin pl) {
         plugin = pl;
+        load();
+    }
 
-        // Make sure file exists
+    public static void reload() {
+        load();
+    }
+
+    private static void load() {
+        if (plugin == null) return;
+
         File file = new File(plugin.getDataFolder(), "messages.yml");
         if (!file.exists()) {
             plugin.saveResource("messages.yml", false);
         }
 
-        reload();
+        messages = YamlConfiguration.loadConfiguration(file);
     }
 
-    public static void reload() {
-        File file = new File(plugin.getDataFolder(), "messages.yml");
-        messages = YamlConfiguration.loadConfiguration(file);
+    public static String color(String input) {
+        if (input == null) return "";
+        return ChatColor.translateAlternateColorCodes('&', input);
+    }
 
-        String rawPrefix = messages.getString("prefix", "");
-        prefix = color(rawPrefix);
+    private static String getRaw(String key) {
+        if (messages == null) return "";
+        return messages.getString(key, "");
     }
 
     public static void send(CommandSender sender, String key) {
-        send(sender, key, Collections.emptyMap());
+        send(sender, key, null);
     }
 
     public static void send(CommandSender sender, String key, Map<String, String> placeholders) {
-        String raw = messages.getString(key, "");
+        if (sender == null) return;
+
+        String raw = getRaw(key);
         if (raw == null || raw.isEmpty()) {
             return;
         }
 
-        String msg = raw.replace("<prefix>", prefix);
+        String prefix = messages.getString("prefix", "");
+        String result = raw.replace("<prefix>", prefix);
 
         if (placeholders != null) {
-            for (Map.Entry<String, String> entry : placeholders.entrySet()) {
-                String ph = "%" + entry.getKey() + "%";
-                msg = msg.replace(ph, entry.getValue());
+            for (Map.Entry<String, String> e : placeholders.entrySet()) {
+                result = result.replace("%" + e.getKey() + "%", e.getValue());
             }
         }
 
-        sender.sendMessage(color(msg));
-    }
-
-    public static String format(String key, Map<String, String> placeholders) {
-        String raw = messages.getString(key, "");
-        if (raw == null) raw = "";
-
-        String msg = raw.replace("<prefix>", prefix);
-
-        if (placeholders != null) {
-            for (Map.Entry<String, String> entry : placeholders.entrySet()) {
-                String ph = "%" + entry.getKey() + "%";
-                msg = msg.replace(ph, entry.getValue());
-            }
+        // support \n as newline
+        for (String line : result.split("\\\\n")) {
+            sender.sendMessage(color(line));
         }
-
-        return color(msg);
-    }
-
-    public static String getPrefix() {
-        return prefix;
-    }
-
-    public static String color(String input) {
-        return ChatColor.translateAlternateColorCodes('&', input);
     }
 }

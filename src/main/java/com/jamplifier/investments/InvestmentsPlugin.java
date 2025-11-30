@@ -87,10 +87,24 @@ public class InvestmentsPlugin extends JavaPlugin {
     }
     
     public void reloadAll() {
+        // core config.yml
         reloadConfig();
+
+        // messages.yml
         MessageUtils.reload();
+
+        // gui.yml
         InvestmentsMenu.reloadConfig();
-        interestService.reloadFromConfig();
+
+        // max-invest-permissions
+        if (investmentManager != null) {
+            investmentManager.reloadPermissions();
+        }
+
+        // interest (rate + interval)
+        if (interestService != null) {
+            interestService.reloadFromConfig();
+        }
     }
 
     private InvestmentStorage createStorage() {

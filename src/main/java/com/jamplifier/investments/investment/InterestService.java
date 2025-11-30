@@ -3,7 +3,9 @@ package com.jamplifier.investments.investment;
 import com.jamplifier.investments.InvestmentsPlugin;
 import com.jamplifier.investments.util.ConfigKeys;
 import com.jamplifier.investments.util.FoliaSchedulerUtil;
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.Bukkit;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -33,10 +35,14 @@ public class InterestService {
     private final Map<UUID, MultiplierData> playerMultipliers = new ConcurrentHashMap<>();
     private volatile MultiplierData globalMultiplier;
 
+    // scheduler handles
+    private ScheduledTask foliaTask;
+    private BukkitTask bukkitTask;
+
     public InterestService(InvestmentsPlugin plugin, InvestmentManager investmentManager) {
         this.plugin = plugin;
         this.investmentManager = investmentManager;
-        reloadFromConfig();
+        reloadFromConfig(); // sets rate + interval, starts task
     }
 
     public void reloadFromConfig() {
@@ -45,26 +51,42 @@ public class InterestService {
 
         this.ratePercent = BigDecimal.valueOf(rate);
         this.intervalTicks = Math.max(1L, minutes * 60L * 20L);
+
+        restart();
     }
 
     public void start() {
+        restart();
+    }
+
+    private void restart() {
+        // cancel old tasks if any
+        if (foliaTask != null) {
+            foliaTask.cancel();
+            foliaTask = null;
+        }
+        if (bukkitTask != null) {
+            bukkitTask.cancel();
+            bukkitTask = null;
+        }
+
         if (ratePercent.compareTo(BigDecimal.ZERO) <= 0 || intervalTicks <= 0) {
             plugin.getLogger().warning("[Investments] Interest disabled (rate-percent <= 0 or invalid interval).");
             return;
         }
 
-        plugin.getLogger().info("[Investments] Starting interest task: base rate=" + ratePercent + "% every " +
-                (intervalTicks / 20L) + " seconds.");
+        plugin.getLogger().info("[Investments] (Re)starting interest task: base rate=" + ratePercent +
+                "% every " + (intervalTicks / 20L) + " seconds.");
 
         if (FoliaSchedulerUtil.isFolia()) {
-            Bukkit.getGlobalRegionScheduler().runAtFixedRate(
+            foliaTask = Bukkit.getGlobalRegionScheduler().runAtFixedRate(
                     plugin,
                     scheduledTask -> tick(),
                     intervalTicks,
                     intervalTicks
             );
         } else {
-            Bukkit.getScheduler().runTaskTimer(
+            bukkitTask = Bukkit.getScheduler().runTaskTimer(
                     plugin,
                     this::tick,
                     intervalTicks,
