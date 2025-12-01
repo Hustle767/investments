@@ -134,7 +134,7 @@ public class InvestmentsMenuListener implements Listener {
                 return;
             }
 
-            // Left-click = collect profits
+         // Left-click = collect profits
             BigDecimal collected = investmentManager.collectProfit(player);
             if (collected.compareTo(BigDecimal.ZERO) <= 0) {
                 MessageUtils.send(player, "no-profit");
@@ -144,10 +144,11 @@ public class InvestmentsMenuListener implements Listener {
             economy.depositPlayer(player, collected.doubleValue());
 
             Map<String, String> ph = new HashMap<>();
-            ph.put("amount", collected.toPlainString());
+            ph.put("amount", AmountUtil.formatShort(collected));
             MessageUtils.send(player, "profit-collected", ph);
 
             InvestmentsMenu.openFor(player, investmentManager.getProfile(uuid));
+
         }
     }
 
@@ -218,9 +219,10 @@ public class InvestmentsMenuListener implements Listener {
         investmentManager.addInvestment(player, amount);
 
         Map<String, String> ph = new HashMap<>();
-        ph.put("amount", amount.toPlainString());
+        ph.put("amount", AmountUtil.formatShort(amount));
         MessageUtils.send(player, "invest-added", ph);
     }
+
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         GuiClickGuard.clear(event.getPlayer());

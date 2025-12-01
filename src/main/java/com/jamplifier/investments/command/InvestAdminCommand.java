@@ -38,7 +38,7 @@ public class InvestAdminCommand {
                 || sub.equals("multiplier")
                 || sub.equals("view")
                 || sub.equals("give")
-                || sub.equals("remove"); // <--- added
+                || sub.equals("remove");
     }
 
     public boolean handleAdminCommand(CommandSender sender, String[] args) {
@@ -56,8 +56,8 @@ public class InvestAdminCommand {
                 return handleView(sender, args);
             case "give":
                 return handleGive(sender, args);
-            case "remove":                                // <--- added
-                return handleRemove(sender, args);        // <--- MUST return here
+            case "remove":
+                return handleRemove(sender, args);
             default:
                 return false;
         }
@@ -202,8 +202,8 @@ public class InvestAdminCommand {
 
         Map<String, String> ph = new HashMap<>();
         ph.put("player", target.getName());
-        ph.put("total_invested", profile.getTotalInvested().toPlainString());
-        ph.put("total_profit", profile.getTotalProfit().toPlainString());
+        ph.put("total_invested", AmountUtil.formatShort(profile.getTotalInvested()));
+        ph.put("total_profit", AmountUtil.formatShort(profile.getTotalProfit()));
         ph.put("count", String.valueOf(profile.getInvestments().size()));
         ph.put("autocollect", autoStatus);
 
@@ -243,8 +243,8 @@ public class InvestAdminCommand {
 
         Map<String, String> ph = new HashMap<>();
         ph.put("player", target.getName());
-        ph.put("amount", amount.toPlainString());
-        ph.put("total_invested", profile.getTotalInvested().toPlainString());
+        ph.put("amount", AmountUtil.formatShort(amount));
+        ph.put("total_invested", AmountUtil.formatShort(profile.getTotalInvested()));
 
         MessageUtils.send(sender, "admin-give-success", ph);
         return true;
@@ -283,8 +283,8 @@ public class InvestAdminCommand {
         if (total.compareTo(amount) < 0) {
             Map<String, String> ph = new HashMap<>();
             ph.put("player", target.getName());
-            ph.put("amount", amount.toPlainString());
-            ph.put("total_invested", total.toPlainString());
+            ph.put("amount", AmountUtil.formatShort(amount));
+            ph.put("total_invested", AmountUtil.formatShort(total));
             MessageUtils.send(sender, "admin-remove-too-much", ph);
             return true;
         }
@@ -302,8 +302,8 @@ public class InvestAdminCommand {
 
         Map<String, String> ph = new HashMap<>();
         ph.put("player", target.getName());
-        ph.put("amount", amount.toPlainString());
-        ph.put("total_invested", newTotal.toPlainString());
+        ph.put("amount", AmountUtil.formatShort(amount));
+        ph.put("total_invested", AmountUtil.formatShort(newTotal));
         MessageUtils.send(sender, "admin-remove-success", ph);
 
         return true;

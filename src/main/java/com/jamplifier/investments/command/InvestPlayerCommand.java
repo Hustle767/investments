@@ -91,8 +91,8 @@ public class InvestPlayerCommand implements CommandExecutor {
 
         if (amount.compareTo(minAmount) < 0) {
             Map<String, String> ph = new HashMap<>();
-            ph.put("amount", amount.toPlainString());
-            ph.put("min", minAmount.toPlainString());
+            ph.put("amount", AmountUtil.formatShort(amount));
+            ph.put("min", AmountUtil.formatShort(minAmount));
             MessageUtils.send(player, "error-min-invest-amount", ph);
             return;
         }
@@ -117,7 +117,7 @@ public class InvestPlayerCommand implements CommandExecutor {
         investmentManager.addInvestment(player, amount);
 
         Map<String, String> ph = new HashMap<>();
-        ph.put("amount", amount.toPlainString());
+        ph.put("amount", AmountUtil.formatShort(amount));
         MessageUtils.send(player, "invest-added", ph);
     }
 }
