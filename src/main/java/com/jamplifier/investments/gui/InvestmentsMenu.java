@@ -2,6 +2,7 @@ package com.jamplifier.investments.gui;
 
 import com.jamplifier.investments.InvestmentsPlugin;
 import com.jamplifier.investments.investment.InvestmentProfile;
+import com.jamplifier.investments.util.AmountUtil;
 import com.jamplifier.investments.util.MessageUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -155,12 +156,12 @@ public class InvestmentsMenu implements InventoryHolder {
         BigDecimal invested = profile.getTotalInvested();
         BigDecimal profit = profile.getTotalProfit();
 
-        // Read interest rate from config for GUI placeholder
+     // Read interest rate from config for GUI placeholder
         double rate = plugin.getConfig().getDouble("interest.rate-percent", 1.0D);
 
         Map<String, String> placeholders = new HashMap<>();
-        placeholders.put("amount_invested", invested.toPlainString());
-        placeholders.put("profit", profit.toPlainString());
+        placeholders.put("amount_invested", AmountUtil.formatShort(invested));
+        placeholders.put("profit", AmountUtil.formatShort(profit));
         placeholders.put("autocollect_status",
                 profile.isAutoCollect() ? "&aEnabled" : "&cDisabled");
         placeholders.put("interest_rate", String.valueOf(rate));

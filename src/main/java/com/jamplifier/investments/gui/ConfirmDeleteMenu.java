@@ -2,6 +2,7 @@ package com.jamplifier.investments.gui;
 
 import com.jamplifier.investments.InvestmentsPlugin;
 import com.jamplifier.investments.investment.InvestmentProfile;
+import com.jamplifier.investments.util.AmountUtil;
 import com.jamplifier.investments.util.MessageUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -95,10 +96,9 @@ public class ConfirmDeleteMenu implements InventoryHolder {
         int count = profile.getInvestments().size();
 
         Map<String, String> placeholders = new HashMap<>();
-        placeholders.put("total_invested", totalInv.toPlainString());
-        placeholders.put("total_profit", totalProf.toPlainString());
+        placeholders.put("total_invested", AmountUtil.formatShort(totalInv));
+        placeholders.put("total_profit", AmountUtil.formatShort(totalProf));
         placeholders.put("count", String.valueOf(count));
-
         // Filler – fill everything except YES/NO slots
         if (fillerEnabled) {
             ItemStack filler = new ItemStack(fillerMaterial);
