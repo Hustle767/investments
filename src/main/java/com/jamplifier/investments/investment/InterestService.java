@@ -23,11 +23,12 @@ public class InterestService {
 
     private final InvestmentsPlugin plugin;
     private final InvestmentManager investmentManager;
+    private final Economy economy; // <-- NEW
 
     private BigDecimal ratePercent;
     private long intervalTicks;
 
-    // NEW: autocollect config cache
+    // autocollect config cache
     private boolean autocollectEnabled;
     private String autocollectPermission;
 
@@ -63,11 +64,13 @@ public class InterestService {
     public InterestService(InvestmentsPlugin plugin, InvestmentManager investmentManager) {
         this.plugin = plugin;
         this.investmentManager = investmentManager;
+        // pull Vault economy from your existing hook
+        this.economy = plugin.getEconomyHook().getEconomy();
         reloadFromConfig();
     }
 
     public void reloadFromConfig() {
-    	double rate = plugin.getConfig().getDouble(ConfigKeys.INTEREST_RATE_PERCENT, 1.0D);
+        double rate = plugin.getConfig().getDouble(ConfigKeys.INTEREST_RATE_PERCENT, 1.0D);
         int minutes = plugin.getConfig().getInt(ConfigKeys.INTEREST_INTERVAL_MINUTES, 10);
 
         this.ratePercent = BigDecimal.valueOf(rate);
@@ -85,7 +88,7 @@ public class InterestService {
         notifyActionbarMessage = cfg.getString("notifications.actionbar.message",
                 "&a+%amount% &7investment profit (&e%rate%%%&7)");
 
-        // NEW: autocollect config
+        // autocollect config
         autocollectEnabled = cfg.getBoolean("autocollect.enabled", true);
         autocollectPermission = cfg.getString("autocollect.permission", "investments.autocollect");
 
@@ -222,13 +225,31 @@ public class InterestService {
                 }
             }
 
-            if (changed) {
-                investmentManager.saveProfile(profile);
-                sendNotification(owner, earnedThisTick, effectiveRateForTick);
+            if (!changed) {
+                continue;
             }
+
+            // --- AUTO-COLLECT LOGIC ---
+            if (autocollectEnabled && profile.isAutoCollect()) {
+                // Take ALL accumulated profit (including previous ticks)
+                BigDecimal toCollect = profile.collectAllProfit();
+
+                if (toCollect.compareTo(BigDecimal.ZERO) > 0 && economy != null) {
+                    OfflinePlayer offline = Bukkit.getOfflinePlayer(owner);
+                    economy.depositPlayer(offline, toCollect.doubleValue());
+                }
+
+                // Save profile after clearing profit
+                investmentManager.saveProfile(profile);
+            } else {
+                // No auto-collect: just save updated profit
+                investmentManager.saveProfile(profile);
+            }
+
+            // Send the usual notification for this tick’s earnings
+            sendNotification(owner, earnedThisTick, effectiveRateForTick);
         }
     }
-
 
     private void sendNotification(UUID uuid, BigDecimal amount, BigDecimal rate) {
         if (!notificationsEnabled) return;
@@ -260,13 +281,13 @@ public class InterestService {
             }
         });
     }
+
     // GETTERS
     public BigDecimal getRatePercent() {
         return ratePercent;
     }
-    
+
     public BigDecimal getBaseRatePercentPerSecond() {
         return ratePercent;
     }
-
 }

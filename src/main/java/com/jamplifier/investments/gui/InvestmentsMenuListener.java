@@ -4,10 +4,11 @@ import com.jamplifier.investments.InvestmentsPlugin;
 import com.jamplifier.investments.economy.EconomyHook;
 import com.jamplifier.investments.investment.InvestmentManager;
 import com.jamplifier.investments.investment.InvestmentProfile;
+import com.jamplifier.investments.util.AmountUtil;
 import com.jamplifier.investments.util.ChatInputManager;
 import com.jamplifier.investments.util.MessageUtils;
-import com.jamplifier.investments.util.AmountUtil;
 import net.milkbowl.vault.economy.Economy;
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -38,39 +39,45 @@ public class InvestmentsMenuListener implements Listener {
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
-        if (!(event.getInventory().getHolder() instanceof InvestmentsMenu menu)) {
-            return;
-        }
-
-        event.setCancelled(true);
-
         if (!(event.getWhoClicked() instanceof Player player)) {
             return;
         }
 
+        Object holder = event.getInventory().getHolder();
+
+        if (holder instanceof InvestmentsMenu) {
+            handleMainMenuClick(event, player);
+        } else if (holder instanceof ConfirmDeleteMenu) {
+            handleConfirmDeleteClick(event, player);
+        }
+    }
+
+    // ===================== MAIN MENU =====================
+
+    private void handleMainMenuClick(InventoryClickEvent event, Player player) {
+        event.setCancelled(true);
+
         int rawSlot = event.getRawSlot();
         if (rawSlot < 0 || rawSlot >= event.getInventory().getSize()) {
-            return; // player inventory
+            return; // click in player inventory
         }
 
         UUID uuid = player.getUniqueId();
         InvestmentProfile profile = investmentManager.getProfile(uuid);
 
-        // DELETE investment
+        // DELETE investment -> open confirm GUI instead of instant delete
         if (rawSlot == InvestmentsMenu.getDeleteSlot()) {
             if (profile.getInvestments().isEmpty()) {
                 MessageUtils.send(player, "no-investments");
                 return;
             }
-            investmentManager.deleteInvestments(player);
-            MessageUtils.send(player, "investment-deleted");
-            InvestmentsMenu.openFor(player, investmentManager.getProfile(uuid));
+
+            ConfirmDeleteMenu.openFor(plugin, player, profile);
             return;
         }
 
-     // INFO -> chat input invest (supports pre-selected options)
+        // INFO -> chat input invest (supports pre-selected options)
         if (rawSlot == InvestmentsMenu.getInfoSlot()) {
-
             // Close GUI so they can immediately type in chat
             player.closeInventory();
 
@@ -89,7 +96,6 @@ public class InvestmentsMenuListener implements Listener {
             return;
         }
 
-
         // Auto-collect toggle slot (red/green glass)
         if (rawSlot == InvestmentsMenu.getAutocollectSlot()) {
             if (!player.hasPermission(plugin.getConfig().getString("autocollect.permission", "investments.autocollect"))) {
@@ -106,9 +112,9 @@ public class InvestmentsMenuListener implements Listener {
             return;
         }
 
-        // COLLECT profits (left-click collect, right-click also toggle auto if you want)
+        // COLLECT profits (left-click collect, right-click also toggle auto)
         if (rawSlot == InvestmentsMenu.getCollectSlot()) {
-            // Right-click = toggle auto-collect (optional; keep or remove)
+            // Right-click = toggle auto-collect
             if (event.getClick() == ClickType.RIGHT) {
                 if (!player.hasPermission(plugin.getConfig().getString("autocollect.permission", "investments.autocollect"))) {
                     MessageUtils.send(player, "no-permission");
@@ -141,6 +147,36 @@ public class InvestmentsMenuListener implements Listener {
         }
     }
 
+    // ===================== CONFIRM DELETE MENU =====================
+
+    private void handleConfirmDeleteClick(InventoryClickEvent event, Player player) {
+        event.setCancelled(true);
+
+        int rawSlot = event.getRawSlot();
+        if (rawSlot < 0 || rawSlot >= event.getInventory().getSize()) {
+            return;
+        }
+
+        UUID uuid = player.getUniqueId();
+
+        // Confirm deletion
+        if (rawSlot == ConfirmDeleteMenu.getConfirmSlot()) {
+            investmentManager.deleteInvestments(player);
+            MessageUtils.send(player, "investment-deleted");
+
+            // Open main menu again (now empty)
+            InvestmentsMenu.openFor(player, investmentManager.getProfile(uuid));
+            return;
+        }
+
+        // Cancel -> go back to main menu
+        if (rawSlot == ConfirmDeleteMenu.getCancelSlot()) {
+            InvestmentsMenu.openFor(player, investmentManager.getProfile(uuid));
+        }
+    }
+
+    // ===================== UTIL / INVEST HANDLING =====================
+
     /** Resolve input from chat: either pre-selected option index, or raw numeric amount. */
     private BigDecimal resolveAmountFromInput(String input) {
         String trimmed = input.trim();
@@ -154,20 +190,8 @@ public class InvestmentsMenuListener implements Listener {
             }
         }
 
-        // Fallback: parse as numeric amount
+        // Fallback: parse as numeric amount (supports k/m/b etc. via AmountUtil)
         return AmountUtil.parseAmount(trimmed);
-    }
-
-    private BigDecimal parseAmount(String input) {
-        try {
-            BigDecimal bd = new BigDecimal(input);
-            if (bd.compareTo(BigDecimal.ZERO) <= 0) {
-                return null;
-            }
-            return bd;
-        } catch (NumberFormatException e) {
-            return null;
-        }
     }
 
     private void handleInvest(Player player, BigDecimal amount) {

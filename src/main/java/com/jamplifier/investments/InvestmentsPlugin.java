@@ -1,6 +1,8 @@
 package com.jamplifier.investments;
 
-import com.jamplifier.investments.command.InvestCommand;
+import com.jamplifier.investments.command.InvestAdminCommand;
+import com.jamplifier.investments.command.InvestPlayerCommand;
+import com.jamplifier.investments.command.InvestTabCompleter;
 import com.jamplifier.investments.economy.EconomyHook;
 import com.jamplifier.investments.gui.InvestmentsMenu;
 import com.jamplifier.investments.gui.InvestmentsMenuListener;
@@ -79,11 +81,17 @@ public class InvestmentsPlugin extends JavaPlugin {
                 new InvestmentsMenuListener(this, investmentManager, economyHook), this
         );
 
-        InvestCommand investCommand = new InvestCommand(this, investmentManager, economyHook);
-        PluginCommand cmd = getCommand("invest");
+        
+        InvestAdminCommand adminCommand = new InvestAdminCommand(this, investmentManager, interestService);
+        InvestPlayerCommand playerCommand = new InvestPlayerCommand(
+                this, investmentManager, economyHook, interestService, adminCommand
+        );
+        InvestTabCompleter tabCompleter = new InvestTabCompleter();
+
+        var cmd = getCommand("invest");
         if (cmd != null) {
-            cmd.setExecutor(investCommand);
-            cmd.setTabCompleter(investCommand);
+            cmd.setExecutor(playerCommand);      // routes to adminCommand internally when needed
+            cmd.setTabCompleter(tabCompleter);
         }
         
      // PlaceholderAPI hook
@@ -94,8 +102,9 @@ public class InvestmentsPlugin extends JavaPlugin {
         } else {
             getLogger().info("[Investments] PlaceholderAPI not found; PAPI placeholders disabled.");
         }
-
+        
     }
+
 
     @Override
     public void onDisable() {
