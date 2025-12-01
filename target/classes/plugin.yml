@@ -31,9 +31,5 @@ permissions:
   invest.vip:
     default: false
 
-  investments.admin.reload:
-    default: op
-  investments.admin.delete:
-    default: op
-  investments.admin.multiplier:
+  investments.admin:
     default: op

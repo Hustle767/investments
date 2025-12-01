@@ -23,7 +23,7 @@ mongodb:
 
 # Base interest settings
 interest:
-  # interest applied PER SECOND in percent (e.g. 0.01 = 0.01% per second)
+  # interest applied PER SECOND in percent (e.g. 0.001 = 0.10% per second)
   rate-percent: 0.001
   # how often to apply/update the accumulated interest in-game
   interval-minutes: 1
@@ -33,8 +33,8 @@ min-invest-amount: 10000.0
 
 # Profit gain notifications
 notifications:
-  enabled: true
-  default-enabled: true
+  enabled: false
+  default-enabled: false
 
   chat:
     enabled: true

@@ -73,5 +73,33 @@ public final class MessageUtils {
         for (String line : result.split("\\\\n")) {
             sender.sendMessage(color(line));
         }
+        
     }
+    public static void sendMulti(org.bukkit.command.CommandSender sender,
+            String path,
+            Map<String, String> placeholders) {
+if (sender == null) return;
+
+// Try to read a string list first
+java.util.List<String> lines = messages.getStringList(path);
+if (lines == null || lines.isEmpty()) {
+// Fallback to single-line if it's not a list
+send(sender, path, placeholders);
+return;
+}
+
+for (String raw : lines) {
+String msg = raw;
+if (placeholders != null) {
+for (Map.Entry<String, String> e : placeholders.entrySet()) {
+msg = msg.replace("%" + e.getKey() + "%", e.getValue());
+}
+}
+sender.sendMessage(color(msg));
+}
+}
+    
+    
+    
+    
 }

@@ -4,6 +4,8 @@ import com.jamplifier.investments.command.InvestAdminCommand;
 import com.jamplifier.investments.command.InvestPlayerCommand;
 import com.jamplifier.investments.command.InvestTabCompleter;
 import com.jamplifier.investments.economy.EconomyHook;
+import com.jamplifier.investments.gui.ConfirmDeleteMenu;
+import com.jamplifier.investments.gui.ConfirmDeleteMenuListener;
 import com.jamplifier.investments.gui.InvestmentsMenu;
 import com.jamplifier.investments.gui.InvestmentsMenuListener;
 import com.jamplifier.investments.investment.InvestmentManager;
@@ -52,12 +54,11 @@ public class InvestmentsPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         saveDefaultConfig();
-        saveResource("gui.yml", false);
-        saveResource("messages.yml", false);
 
         MessageUtils.init(this);
         FoliaSchedulerUtil.init(this);
         InvestmentsMenu.init(this);
+        ConfirmDeleteMenu.init(this);
 
         this.economyHook = new EconomyHook(this);
         if (!economyHook.setupEconomy()) {
@@ -79,6 +80,9 @@ public class InvestmentsPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(chatInputManager, this);
         getServer().getPluginManager().registerEvents(
                 new InvestmentsMenuListener(this, investmentManager, economyHook), this
+        );
+        getServer().getPluginManager().registerEvents(
+                new ConfirmDeleteMenuListener(investmentManager), this
         );
 
         
@@ -122,6 +126,7 @@ public class InvestmentsPlugin extends JavaPlugin {
 
         // gui.yml
         InvestmentsMenu.reloadConfig();
+        ConfirmDeleteMenu.reloadConfig();
 
         // max-invest-permissions
         if (investmentManager != null) {

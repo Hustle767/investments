@@ -25,27 +25,20 @@ public class InvestTabCompleter implements TabCompleter {
         if (args.length == 1) {
             List<String> completions = new ArrayList<>();
 
-            // Player suggestions
+            // Player suggestions (amounts + notify)
             completions.add("1000");
             completions.add("10000");
             completions.add("50000");
             completions.add("notify");
 
-            // Admin subcommands
-            if (sender.hasPermission("investments.admin.reload")) {
+            // Admin subcommands (single permission node)
+            if (sender.hasPermission("investments.admin")) {
                 completions.add("reload");
-            }
-            if (sender.hasPermission("investments.admin.delete")) {
                 completions.add("delete");
-            }
-            if (sender.hasPermission("investments.admin.multiplier")) {
                 completions.add("multiplier");
-            }
-            if (sender.hasPermission("investments.admin.view")) {
                 completions.add("view");
-            }
-            if (sender.hasPermission("investments.admin.give")) {
                 completions.add("give");
+                completions.add("remove");
             }
 
             return partial(completions, args[0]);
@@ -54,7 +47,7 @@ public class InvestTabCompleter implements TabCompleter {
         // /invest delete <player>
         if (args.length == 2 &&
                 args[0].equalsIgnoreCase("delete") &&
-                sender.hasPermission("investments.admin.delete")) {
+                sender.hasPermission("investments.admin")) {
 
             List<String> names = Bukkit.getOnlinePlayers().stream()
                     .map(Player::getName)
@@ -65,7 +58,7 @@ public class InvestTabCompleter implements TabCompleter {
         // /invest view <player>
         if (args.length == 2 &&
                 args[0].equalsIgnoreCase("view") &&
-                sender.hasPermission("investments.admin.view")) {
+                sender.hasPermission("investments.admin")) {
 
             List<String> names = Bukkit.getOnlinePlayers().stream()
                     .map(Player::getName)
@@ -75,7 +68,7 @@ public class InvestTabCompleter implements TabCompleter {
 
         // /invest give <player> <amount>
         if (args[0].equalsIgnoreCase("give") &&
-                sender.hasPermission("investments.admin.give")) {
+                sender.hasPermission("investments.admin")) {
 
             if (args.length == 2) {
                 List<String> names = Bukkit.getOnlinePlayers().stream()
@@ -91,7 +84,7 @@ public class InvestTabCompleter implements TabCompleter {
 
         // /invest multiplier <player|all> <multiplier> <minutes>
         if (args[0].equalsIgnoreCase("multiplier") &&
-                sender.hasPermission("investments.admin.multiplier")) {
+                sender.hasPermission("investments.admin")) {
 
             if (args.length == 2) {
                 List<String> options = new ArrayList<>();
@@ -108,6 +101,22 @@ public class InvestTabCompleter implements TabCompleter {
 
             if (args.length == 4) {
                 return partial(Arrays.asList("5", "10", "30"), args[3]);
+            }
+        }
+
+        // /invest remove <player> <amount>
+        if (args[0].equalsIgnoreCase("remove") &&
+                sender.hasPermission("investments.admin")) {
+
+            if (args.length == 2) {
+                List<String> names = Bukkit.getOnlinePlayers().stream()
+                        .map(Player::getName)
+                        .collect(Collectors.toList());
+                return partial(names, args[1]);
+            }
+
+            if (args.length == 3) {
+                return partial(Arrays.asList("10000", "50000", "100000"), args[2]);
             }
         }
 

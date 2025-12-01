@@ -6,6 +6,7 @@ import com.jamplifier.investments.investment.InvestmentManager;
 import com.jamplifier.investments.investment.InvestmentProfile;
 import com.jamplifier.investments.util.AmountUtil;
 import com.jamplifier.investments.util.ChatInputManager;
+import com.jamplifier.investments.util.GuiClickGuard;
 import com.jamplifier.investments.util.MessageUtils;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
@@ -15,6 +16,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -47,9 +49,7 @@ public class InvestmentsMenuListener implements Listener {
 
         if (holder instanceof InvestmentsMenu) {
             handleMainMenuClick(event, player);
-        } else if (holder instanceof ConfirmDeleteMenu) {
-            handleConfirmDeleteClick(event, player);
-        }
+        } 
     }
 
     // ===================== MAIN MENU =====================
@@ -60,6 +60,10 @@ public class InvestmentsMenuListener implements Listener {
         int rawSlot = event.getRawSlot();
         if (rawSlot < 0 || rawSlot >= event.getInventory().getSize()) {
             return; // click in player inventory
+        }
+        
+        if (com.jamplifier.investments.util.GuiClickGuard.shouldBlock(player)) {
+            return;
         }
 
         UUID uuid = player.getUniqueId();
@@ -72,7 +76,7 @@ public class InvestmentsMenuListener implements Listener {
                 return;
             }
 
-            ConfirmDeleteMenu.openFor(plugin, player, profile);
+            ConfirmDeleteMenu.openFor(player, profile);
             return;
         }
 
@@ -160,7 +164,7 @@ public class InvestmentsMenuListener implements Listener {
         UUID uuid = player.getUniqueId();
 
         // Confirm deletion
-        if (rawSlot == ConfirmDeleteMenu.getConfirmSlot()) {
+        if (rawSlot == ConfirmDeleteMenu.getYesSlot()) {
             investmentManager.deleteInvestments(player);
             MessageUtils.send(player, "investment-deleted");
 
@@ -170,7 +174,7 @@ public class InvestmentsMenuListener implements Listener {
         }
 
         // Cancel -> go back to main menu
-        if (rawSlot == ConfirmDeleteMenu.getCancelSlot()) {
+        if (rawSlot == ConfirmDeleteMenu.getNoSlot()) {
             InvestmentsMenu.openFor(player, investmentManager.getProfile(uuid));
         }
     }
@@ -217,4 +221,9 @@ public class InvestmentsMenuListener implements Listener {
         ph.put("amount", amount.toPlainString());
         MessageUtils.send(player, "invest-added", ph);
     }
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        GuiClickGuard.clear(event.getPlayer());
+    }
+
 }

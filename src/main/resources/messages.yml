@@ -38,3 +38,6 @@ admin-view-profile:
   - "&7Active investments: &e%count%"
   - "&7Auto-collect: &e%autocollect%"
 admin-give-success: "&8[&aInvestments&8] &7Added &a%amount% &7to &e%player%&7's investments. New total: &a%total_invested%&7."
+admin-remove-too-much: "<prefix>&cPlayer %player% only has %total_invested% invested. You tried to remove %amount%."
+admin-remove-success: "<prefix>&aRemoved %amount% from %player%'s investments. New total: %total_invested%."
+

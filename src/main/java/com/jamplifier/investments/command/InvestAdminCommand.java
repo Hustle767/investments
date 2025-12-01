@@ -37,7 +37,8 @@ public class InvestAdminCommand {
                 || sub.equals("delete")
                 || sub.equals("multiplier")
                 || sub.equals("view")
-                || sub.equals("give");
+                || sub.equals("give")
+                || sub.equals("remove"); // <--- added
     }
 
     public boolean handleAdminCommand(CommandSender sender, String[] args) {
@@ -55,13 +56,15 @@ public class InvestAdminCommand {
                 return handleView(sender, args);
             case "give":
                 return handleGive(sender, args);
+            case "remove":                                // <--- added
+                return handleRemove(sender, args);        // <--- MUST return here
             default:
                 return false;
         }
     }
 
     private boolean handleReload(CommandSender sender) {
-        if (!sender.hasPermission("investments.admin.reload")) {
+        if (!sender.hasPermission("investments.admin")) {
             MessageUtils.send(sender, "no-permission");
             return true;
         }
@@ -71,7 +74,7 @@ public class InvestAdminCommand {
     }
 
     private boolean handleDelete(CommandSender sender, String[] args) {
-        if (!sender.hasPermission("investments.admin.delete")) {
+        if (!sender.hasPermission("investments.admin")) {
             MessageUtils.send(sender, "no-permission");
             return true;
         }
@@ -107,7 +110,7 @@ public class InvestAdminCommand {
     }
 
     private boolean handleMultiplier(CommandSender sender, String[] args) {
-        if (!sender.hasPermission("investments.admin.multiplier")) {
+        if (!sender.hasPermission("investments.admin")) {
             MessageUtils.send(sender, "no-permission");
             return true;
         }
@@ -175,7 +178,7 @@ public class InvestAdminCommand {
 
     // /invest view <player>
     private boolean handleView(CommandSender sender, String[] args) {
-        if (!sender.hasPermission("investments.admin.view")) {
+        if (!sender.hasPermission("investments.admin")) {
             MessageUtils.send(sender, "no-permission");
             return true;
         }
@@ -204,13 +207,13 @@ public class InvestAdminCommand {
         ph.put("count", String.valueOf(profile.getInvestments().size()));
         ph.put("autocollect", autoStatus);
 
-        MessageUtils.send(sender, "admin-view-profile", ph);
+        MessageUtils.sendMulti(sender, "admin-view-profile", ph);
         return true;
     }
 
     // /invest give <player> <amount>
     private boolean handleGive(CommandSender sender, String[] args) {
-        if (!sender.hasPermission("investments.admin.give")) {
+        if (!sender.hasPermission("investments.admin")) {
             MessageUtils.send(sender, "no-permission");
             return true;
         }
@@ -244,6 +247,65 @@ public class InvestAdminCommand {
         ph.put("total_invested", profile.getTotalInvested().toPlainString());
 
         MessageUtils.send(sender, "admin-give-success", ph);
+        return true;
+    }
+
+    // /invest remove <player> <amount>
+    private boolean handleRemove(CommandSender sender, String[] args) {
+        if (!sender.hasPermission("investments.admin")) {
+            MessageUtils.send(sender, "no-permission");
+            return true;
+        }
+
+        if (args.length < 3) {
+            sender.sendMessage("Usage: /invest remove <player> <amount>");
+            return true;
+        }
+
+        OfflinePlayer target = resolvePlayer(args[1]);
+        if (target == null || target.getUniqueId() == null || target.getName() == null) {
+            Map<String, String> ph = new HashMap<>();
+            ph.put("player", args[1]);
+            MessageUtils.send(sender, "admin-player-not-found", ph);
+            return true;
+        }
+
+        BigDecimal amount = AmountUtil.parseAmount(args[2]);
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            MessageUtils.send(sender, "invalid-amount");
+            return true;
+        }
+
+        InvestmentProfile profile = investmentManager.getProfile(target.getUniqueId());
+        BigDecimal total = profile.getTotalInvested();
+
+        // Not enough invested
+        if (total.compareTo(amount) < 0) {
+            Map<String, String> ph = new HashMap<>();
+            ph.put("player", target.getName());
+            ph.put("amount", amount.toPlainString());
+            ph.put("total_invested", total.toPlainString());
+            MessageUtils.send(sender, "admin-remove-too-much", ph);
+            return true;
+        }
+
+        // New total after removal
+        BigDecimal newTotal = total.subtract(amount);
+
+        // Reset existing investments and re-add as a single combined one
+        profile.deleteAllInvestments();
+        if (newTotal.compareTo(BigDecimal.ZERO) > 0) {
+            profile.addInvestment(newTotal);
+        }
+
+        investmentManager.saveProfile(profile);
+
+        Map<String, String> ph = new HashMap<>();
+        ph.put("player", target.getName());
+        ph.put("amount", amount.toPlainString());
+        ph.put("total_invested", newTotal.toPlainString());
+        MessageUtils.send(sender, "admin-remove-success", ph);
+
         return true;
     }
 

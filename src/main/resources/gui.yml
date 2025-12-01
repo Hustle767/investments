@@ -59,3 +59,30 @@ investments-gui:
     material: GRAY_STAINED_GLASS_PANE
     name: "&r"
     slots: "all"
+
+confirm-delete-gui:
+  title: "          &8Confirm Deletion"
+  size: 27
+
+  filler:
+    enabled: true
+    material: GRAY_STAINED_GLASS_PANE
+    name: "&7"
+    lore: []  
+
+  yes-button:
+    slot: 11
+    material: LIME_STAINED_GLASS_PANE
+    name: "&aConfirm delete"
+    lore:
+      - "&7This will &cdelete all&7 of your investments."
+      - "&7Total invested: &a%total_invested%"
+      - "&7Total profit: &a%total_profit%"
+      - "&7Active investments: &e%count%"
+
+  no-button:
+    slot: 15
+    material: RED_STAINED_GLASS_PANE
+    name: "&cCancel"
+    lore:
+      - "&7Click to cancel and go back."
