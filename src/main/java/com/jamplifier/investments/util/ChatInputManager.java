@@ -7,6 +7,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
@@ -26,10 +27,13 @@ public class ChatInputManager implements Listener {
         String optionsText = "none";
         if (sec != null && !sec.getKeys(false).isEmpty()) {
             List<String> parts = new ArrayList<>();
-            for (String key : new TreeSet<>(sec.getKeys(false))) { // sorted keys
+            for (String key : new TreeSet<>(sec.getKeys(false))) { // sorted keys "1","2","3"
                 double val = sec.getDouble(key, -1.0D);
                 if (val <= 0) continue;
-                parts.add(key + " = " + (long) val);
+
+                BigDecimal amount = BigDecimal.valueOf(val);
+                // 1 = 10k, 2 = 20k, 3 = 50k
+                parts.add(key + " = " + AmountUtil.formatShort(amount));
             }
             if (!parts.isEmpty()) {
                 optionsText = String.join(", ", parts);
@@ -41,13 +45,15 @@ public class ChatInputManager implements Listener {
                 .getConfig()
                 .getDouble(ConfigKeys.MIN_INVEST_AMOUNT, 10000.0D);
 
+        BigDecimal minAmount = BigDecimal.valueOf(minAmountDouble);
+
         Map<String, String> ph = new HashMap<>();
         ph.put("options", optionsText);
-        ph.put("min", String.valueOf((long) minAmountDouble));
+        // minimum 10k
+        ph.put("min", AmountUtil.formatShort(minAmount));
 
         MessageUtils.send(player, "chat-enter-amount.start", ph);
     }
-
 
     public void cancel(Player player) {
         waiting.remove(player.getUniqueId());
@@ -71,7 +77,6 @@ public class ChatInputManager implements Listener {
 
         String msg = event.getMessage().trim();
 
-        // Remove from waiting *now* so they don't get double-handled
         waiting.remove(player.getUniqueId());
 
         if (msg.equalsIgnoreCase("cancel")) {
