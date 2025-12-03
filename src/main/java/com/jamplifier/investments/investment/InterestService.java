@@ -4,6 +4,7 @@ import com.jamplifier.investments.InvestmentsPlugin;
 import com.jamplifier.investments.util.ConfigKeys;
 import com.jamplifier.investments.util.FoliaSchedulerUtil;
 import com.jamplifier.investments.util.MessageUtils;
+import com.jamplifier.investments.util.AmountUtil;
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import net.kyori.adventure.text.Component;
 import net.milkbowl.vault.economy.Economy;
@@ -260,8 +261,19 @@ public class InterestService {
         if (player == null) return;
 
         Map<String, String> placeholders = new HashMap<>();
-        placeholders.put("amount", amount.toPlainString());
-        placeholders.put("rate", rate.toPlainString());
+
+     String amountShort = AmountUtil.formatShort(amount);
+
+     String amountFull = amount.setScale(2, RoundingMode.DOWN)
+             .stripTrailingZeros()
+             .toPlainString();
+
+     placeholders.put("amount", amountShort);
+
+     placeholders.put("amount_short", amountShort);
+     placeholders.put("amount_full", amountFull);
+
+     placeholders.put("rate", rate.toPlainString());
 
         FoliaSchedulerUtil.runForEntity(player, () -> {
             if (notifyChatEnabled) {

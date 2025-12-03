@@ -163,7 +163,7 @@ public class InvestmentsMenu implements InventoryHolder {
         placeholders.put("amount_invested", AmountUtil.formatShort(invested));
         placeholders.put("profit", AmountUtil.formatShort(profit));
         placeholders.put("autocollect_status",
-                profile.isAutoCollect() ? "&aEnabled" : "&cDisabled");
+                profile.isAutoCollect() ? "&aAktiviert" : "&cDeaktiviert");
         placeholders.put("interest_rate", String.valueOf(rate));
 
         // Delete
