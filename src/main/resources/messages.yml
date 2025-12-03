@@ -21,6 +21,7 @@ autocollect-disabled: "<prefix>&cAuto-collect disabled."
 notify-enabled: "<prefix>&aInvestment profit notifications &aENABLED&7."
 notify-disabled: "<prefix>&aInvestment profit notifications &cDISABLED&7."
 error-min-invest-amount: "<prefix>&cThe minimum investment is &a%min%&c. You tried &e%amount%&c."
+max-invest-amount-reached: "<prefix>&cYou cannot invest more than &e%limit%&c in total. Current: &a%current%&c, attempted: &e%attempt%&c."
 
 
 # Admin

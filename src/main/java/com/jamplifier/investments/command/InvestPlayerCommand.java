@@ -97,15 +97,17 @@ public class InvestPlayerCommand implements CommandExecutor {
             return;
         }
 
-        // Balance + slot checks
+        // Balance check
         double bal = economy.getBalance(player);
         if (bal < amount.doubleValue()) {
             MessageUtils.send(player, "not-enough-money");
             return;
         }
 
-        int max = investmentManager.getMaxInvestments(player);
         InvestmentProfile profile = investmentManager.getProfile(player.getUniqueId());
+
+        // Max number of simultaneous investments
+        int max = investmentManager.getMaxInvestments(player);
         if (max > 0 && profile.getInvestments().size() >= max) {
             Map<String, String> ph = new HashMap<>();
             ph.put("limit", String.valueOf(max));
@@ -113,6 +115,22 @@ public class InvestPlayerCommand implements CommandExecutor {
             return;
         }
 
+        // Max total invested amount (config default or permission override)
+        BigDecimal maxTotal = investmentManager.getMaxTotalAmount(player);
+        if (maxTotal != null && maxTotal.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal current = profile.getTotalInvested();
+            BigDecimal newTotal = current.add(amount);
+            if (newTotal.compareTo(maxTotal) > 0) {
+                Map<String, String> ph = new HashMap<>();
+                ph.put("limit", AmountUtil.formatShort(maxTotal));
+                ph.put("current", AmountUtil.formatShort(current));
+                ph.put("attempt", AmountUtil.formatShort(amount));
+                MessageUtils.send(player, "max-invest-amount-reached", ph);
+                return;
+            }
+        }
+
+        // All good: withdraw + add investment
         economy.withdrawPlayer(player, amount.doubleValue());
         investmentManager.addInvestment(player, amount);
 

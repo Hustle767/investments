@@ -30,7 +30,6 @@ public class InvestmentManager {
             return profile;
         });
     }
-    
 
     public void saveProfile(InvestmentProfile profile) {
         profile.save(storage);
@@ -40,10 +39,32 @@ public class InvestmentManager {
         return maxInvestPermissionService.getMaxInvestments(player);
     }
 
+    /**
+     * Returns the max total-invested amount allowed for this player.
+     * - If they have a permission "invest.maxlimit.<amount>", the highest such
+     *   amount is used.
+     * - Otherwise the config value "default-max-invest-amount" is used.
+     * - If both are <= 0, this means "no cap" and BigDecimal.ZERO is returned.
+     */
+    public BigDecimal getMaxTotalAmount(Player player) {
+        // default from config: 0 or negative means "no cap"
+        double defaultMaxDouble = plugin.getConfig().getDouble("default-max-invest-amount", 0.0D);
+        BigDecimal defaultMax = defaultMaxDouble > 0
+                ? BigDecimal.valueOf(defaultMaxDouble)
+                : BigDecimal.ZERO;
+
+        BigDecimal permMax = maxInvestPermissionService.getMaxTotalAmount(player);
+        if (permMax != null && permMax.compareTo(BigDecimal.ZERO) > 0) {
+            return permMax;
+        }
+
+        return defaultMax;
+    }
+
     public void reloadPermissions() {
         maxInvestPermissionService.reload();
     }
-    
+
     public boolean addInvestment(Player player, BigDecimal amount) {
         InvestmentProfile profile = getProfile(player.getUniqueId());
         int max = getMaxInvestments(player);
@@ -69,8 +90,6 @@ public class InvestmentManager {
         profile.deleteAllInvestments();
         saveProfile(profile);
     }
-    
-    
 
     /** All currently loaded profiles (players that have interacted with the plugin). */
     public Iterable<InvestmentProfile> getLoadedProfiles() {

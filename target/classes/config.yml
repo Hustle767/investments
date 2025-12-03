@@ -30,6 +30,10 @@ interest:
   
 # Minimum amount a player is allowed to invest
 min-invest-amount: 10000.0
+# Per-player overrides can be granted with permissions:
+#   invest.maxlimit.<amount>
+# Example: 'invest.maxlimit.100000' -> max total invested 100k.
+default-max-invest-amount: 0.0
 
 # Profit gain notifications
 notifications:
@@ -58,3 +62,8 @@ pre-selected-investments:
 autocollect:
   enabled: true
   permission: "investments.autocollect"
+# Minimum amount a player is allowed to invest
+min-invest-amount: 10000.0
+# Default maximum TOTAL amount a player is allowed to have invested at once.
+# Set to 0 or a negative value to disable the cap (unlimited).
+

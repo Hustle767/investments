@@ -8,8 +8,8 @@ import com.jamplifier.investments.util.AmountUtil;
 import com.jamplifier.investments.util.ChatInputManager;
 import com.jamplifier.investments.util.GuiClickGuard;
 import com.jamplifier.investments.util.MessageUtils;
+import com.jamplifier.investments.util.ConfigKeys;
 import net.milkbowl.vault.economy.Economy;
-import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -49,7 +49,7 @@ public class InvestmentsMenuListener implements Listener {
 
         if (holder instanceof InvestmentsMenu) {
             handleMainMenuClick(event, player);
-        } 
+        }
     }
 
     // ===================== MAIN MENU =====================
@@ -61,8 +61,8 @@ public class InvestmentsMenuListener implements Listener {
         if (rawSlot < 0 || rawSlot >= event.getInventory().getSize()) {
             return; // click in player inventory
         }
-        
-        if (com.jamplifier.investments.util.GuiClickGuard.shouldBlock(player)) {
+
+        if (GuiClickGuard.shouldBlock(player)) {
             return;
         }
 
@@ -94,7 +94,7 @@ public class InvestmentsMenuListener implements Listener {
 
                 handleInvest(p, amount);
 
-                // Re-open GUI after a successful invest
+                // Re-open GUI after a (potential) invest
                 InvestmentsMenu.openFor(p, investmentManager.getProfile(p.getUniqueId()));
             });
             return;
@@ -134,7 +134,7 @@ public class InvestmentsMenuListener implements Listener {
                 return;
             }
 
-         // Left-click = collect profits
+            // Left-click = collect profits
             BigDecimal collected = investmentManager.collectProfit(player);
             if (collected.compareTo(BigDecimal.ZERO) <= 0) {
                 MessageUtils.send(player, "no-profit");
@@ -149,34 +149,6 @@ public class InvestmentsMenuListener implements Listener {
 
             InvestmentsMenu.openFor(player, investmentManager.getProfile(uuid));
 
-        }
-    }
-
-    // ===================== CONFIRM DELETE MENU =====================
-
-    private void handleConfirmDeleteClick(InventoryClickEvent event, Player player) {
-        event.setCancelled(true);
-
-        int rawSlot = event.getRawSlot();
-        if (rawSlot < 0 || rawSlot >= event.getInventory().getSize()) {
-            return;
-        }
-
-        UUID uuid = player.getUniqueId();
-
-        // Confirm deletion
-        if (rawSlot == ConfirmDeleteMenu.getYesSlot()) {
-            investmentManager.deleteInvestments(player);
-            MessageUtils.send(player, "investment-deleted");
-
-            // Open main menu again (now empty)
-            InvestmentsMenu.openFor(player, investmentManager.getProfile(uuid));
-            return;
-        }
-
-        // Cancel -> go back to main menu
-        if (rawSlot == ConfirmDeleteMenu.getNoSlot()) {
-            InvestmentsMenu.openFor(player, investmentManager.getProfile(uuid));
         }
     }
 
@@ -200,14 +172,29 @@ public class InvestmentsMenuListener implements Listener {
     }
 
     private void handleInvest(Player player, BigDecimal amount) {
+        // Minimum invest amount (same as /invest)
+        double minAmountDouble = plugin.getConfig().getDouble(ConfigKeys.MIN_INVEST_AMOUNT, 10000.0D);
+        BigDecimal minAmount = BigDecimal.valueOf(minAmountDouble);
+
+        if (amount.compareTo(minAmount) < 0) {
+            Map<String, String> ph = new HashMap<>();
+            ph.put("amount", AmountUtil.formatShort(amount));
+            ph.put("min", AmountUtil.formatShort(minAmount));
+            MessageUtils.send(player, "error-min-invest-amount", ph);
+            return;
+        }
+
+        // Balance check
         double bal = economy.getBalance(player);
         if (bal < amount.doubleValue()) {
             MessageUtils.send(player, "not-enough-money");
             return;
         }
 
-        int max = investmentManager.getMaxInvestments(player);
         InvestmentProfile profile = investmentManager.getProfile(player.getUniqueId());
+
+        // Max simultaneous investments (count)
+        int max = investmentManager.getMaxInvestments(player);
         if (max > 0 && profile.getInvestments().size() >= max) {
             Map<String, String> ph = new HashMap<>();
             ph.put("limit", String.valueOf(max));
@@ -215,6 +202,22 @@ public class InvestmentsMenuListener implements Listener {
             return;
         }
 
+        // Max total invested amount (config default or permission override)
+        BigDecimal maxTotal = investmentManager.getMaxTotalAmount(player);
+        if (maxTotal != null && maxTotal.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal current = profile.getTotalInvested();
+            BigDecimal newTotal = current.add(amount);
+            if (newTotal.compareTo(maxTotal) > 0) {
+                Map<String, String> ph = new HashMap<>();
+                ph.put("limit", AmountUtil.formatShort(maxTotal));
+                ph.put("current", AmountUtil.formatShort(current));
+                ph.put("attempt", AmountUtil.formatShort(amount));
+                MessageUtils.send(player, "max-invest-amount-reached", ph);
+                return;
+            }
+        }
+
+        // All good: withdraw + add investment
         economy.withdrawPlayer(player, amount.doubleValue());
         investmentManager.addInvestment(player, amount);
 
