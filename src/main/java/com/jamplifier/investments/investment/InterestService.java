@@ -24,7 +24,7 @@ public class InterestService {
 
     private final InvestmentsPlugin plugin;
     private final InvestmentManager investmentManager;
-    private final Economy economy; // <-- NEW
+    private final Economy economy;
 
     private BigDecimal ratePercent;
     private long intervalTicks;
@@ -65,7 +65,6 @@ public class InterestService {
     public InterestService(InvestmentsPlugin plugin, InvestmentManager investmentManager) {
         this.plugin = plugin;
         this.investmentManager = investmentManager;
-        // pull Vault economy from your existing hook
         this.economy = plugin.getEconomyHook().getEconomy();
         reloadFromConfig();
     }
@@ -191,23 +190,28 @@ public class InterestService {
         return result;
     }
 
-    /** Apply interest to all loaded profiles. */
+    /** Apply interest ONLY to players who are currently online. */
     private void tick() {
         BigDecimal hundred = BigDecimal.valueOf(100);
 
-        // How many seconds does a single tick represent?
         long secondsThisTick = intervalTicks / 20L; // 20 ticks = 1 second
         BigDecimal secondsBD = BigDecimal.valueOf(secondsThisTick);
 
         for (InvestmentProfile profile : investmentManager.getLoadedProfiles()) {
+            UUID owner = profile.getOwner();
+
+            // >>> NEW: skip offline players, so they do not earn profit
+            Player player = Bukkit.getPlayer(owner);
+            if (player == null || !player.isOnline()) {
+                continue;
+            }
+            // <<<
+
             boolean changed = false;
             BigDecimal earnedThisTick = BigDecimal.ZERO;
 
-            UUID owner = profile.getOwner();
-            BigDecimal multiplier = getEffectiveMultiplier(owner); // player + global multipliers
+            BigDecimal multiplier = getEffectiveMultiplier(owner);
 
-            // ratePercent = per-second %, so:
-            // effectivePercentForTick = ratePerSecond * seconds * multipliers
             BigDecimal effectiveRateForTick = ratePercent
                     .multiply(multiplier)
                     .multiply(secondsBD);
@@ -230,24 +234,20 @@ public class InterestService {
                 continue;
             }
 
-            // --- AUTO-COLLECT LOGIC ---
             if (autocollectEnabled && profile.isAutoCollect()) {
-                // Take ALL accumulated profit (including previous ticks)
                 BigDecimal toCollect = profile.collectAllProfit();
 
                 if (toCollect.compareTo(BigDecimal.ZERO) > 0 && economy != null) {
-                    OfflinePlayer offline = Bukkit.getOfflinePlayer(owner);
+                    // player is online here, but depositing via OfflinePlayer is fine
+                    OfflinePlayer offline = player;
                     economy.depositPlayer(offline, toCollect.doubleValue());
                 }
 
-                // Save profile after clearing profit
                 investmentManager.saveProfile(profile);
             } else {
-                // No auto-collect: just save updated profit
                 investmentManager.saveProfile(profile);
             }
 
-            // Send the usual notification for this tick’s earnings
             sendNotification(owner, earnedThisTick, effectiveRateForTick);
         }
     }
@@ -262,18 +262,15 @@ public class InterestService {
 
         Map<String, String> placeholders = new HashMap<>();
 
-     String amountShort = AmountUtil.formatShort(amount);
+        String amountShort = AmountUtil.formatShort(amount);
+        String amountFull = amount.setScale(2, RoundingMode.DOWN)
+                .stripTrailingZeros()
+                .toPlainString();
 
-     String amountFull = amount.setScale(2, RoundingMode.DOWN)
-             .stripTrailingZeros()
-             .toPlainString();
-
-     placeholders.put("amount", amountShort);
-
-     placeholders.put("amount_short", amountShort);
-     placeholders.put("amount_full", amountFull);
-
-     placeholders.put("rate", rate.toPlainString());
+        placeholders.put("amount", amountShort);
+        placeholders.put("amount_short", amountShort);
+        placeholders.put("amount_full", amountFull);
+        placeholders.put("rate", rate.toPlainString());
 
         FoliaSchedulerUtil.runForEntity(player, () -> {
             if (notifyChatEnabled) {
@@ -294,7 +291,6 @@ public class InterestService {
         });
     }
 
-    // GETTERS
     public BigDecimal getRatePercent() {
         return ratePercent;
     }
